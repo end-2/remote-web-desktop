@@ -1,0 +1,979 @@
+{
+  "monitor": {
+    "height": 982,
+    "id": 1,
+    "left": 0,
+    "name": "Built-in Retina Display",
+    "top": 0,
+    "width": 1512
+  },
+  "content_origin": [
+    0.0,
+    155.0
+  ],
+  "frames": [
+    {
+      "codec": "jpeg",
+      "bytes": 58162,
+      "width": 1280,
+      "height": 830,
+      "settings": {
+        "codec": "jpeg",
+        "fps": 15,
+        "max_width": 1280,
+        "monitor": 1,
+        "quality": 65,
+        "type": "settings"
+      },
+      "color_samples": [
+        {
+          "target": "click",
+          "screen_point": [
+            44.0,
+            263.0
+          ],
+          "frame_point": [
+            37,
+            222
+          ],
+          "sample_rgb": [
+            255,
+            0,
+            204
+          ],
+          "expected_rgb": [
+            255,
+            0,
+            204
+          ],
+          "max_channel_error": 0,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "drag",
+          "screen_point": [
+            244.0,
+            263.0
+          ],
+          "frame_point": [
+            207,
+            222
+          ],
+          "sample_rgb": [
+            7,
+            239,
+            155
+          ],
+          "expected_rgb": [
+            0,
+            238,
+            153
+          ],
+          "max_channel_error": 7,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "text",
+          "screen_point": [
+            600.0,
+            411.0
+          ],
+          "frame_point": [
+            508,
+            347
+          ],
+          "sample_rgb": [
+            255,
+            255,
+            255
+          ],
+          "expected_rgb": [
+            255,
+            255,
+            255
+          ],
+          "max_channel_error": 0,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "scroll",
+          "screen_point": [
+            600.0,
+            499.0
+          ],
+          "frame_point": [
+            508,
+            422
+          ],
+          "sample_rgb": [
+            2,
+            32,
+            154
+          ],
+          "expected_rgb": [
+            0,
+            34,
+            153
+          ],
+          "max_channel_error": 2,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        }
+      ]
+    },
+    {
+      "codec": "avc1.42C02A",
+      "bytes": 25558,
+      "keyframe": true
+    }
+  ],
+  "checks": [
+    "native JPEG capture 1280x830 with four fixture color-family matches (58162 bytes; not saved)",
+    "native H.264 keyframe avc1.42C02A (25558 bytes; not saved)",
+    "trusted native pointer down/up and click",
+    "trusted native drag with held left mouse button",
+    "trusted physical KeyA/KeyB/KeyC down/up; keyboard layout produced 'abc'",
+    "native Unicode text insertion (Korean + emoji)",
+    "trusted native wheel event and scroll position change",
+    "disconnect releases held Shift and left mouse button at OS level",
+    "bounded disconnect after 200 rapid pointer events (64.4 ms)",
+    "reconnect and trusted unmodified key (no stuck Shift)"
+  ],
+  "fixture": {
+    "generation": 1,
+    "events": [
+      {
+        "sequence": 1,
+        "type": "pointermove",
+        "target": "click",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281195431
+      },
+      {
+        "sequence": 2,
+        "type": "pointerdown",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281195431
+      },
+      {
+        "sequence": 3,
+        "type": "pointerup",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281195568
+      },
+      {
+        "sequence": 4,
+        "type": "click",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281195568
+      },
+      {
+        "sequence": 5,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 128,
+        "screenX": 324,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281195841
+      },
+      {
+        "sequence": 6,
+        "type": "pointerdown",
+        "target": "drag",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 128,
+        "screenX": 324,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281195842
+      },
+      {
+        "sequence": 7,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 374,
+        "clientY": 128,
+        "screenX": 374,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281195982
+      },
+      {
+        "sequence": 8,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 424,
+        "clientY": 128,
+        "screenX": 424,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281196127
+      },
+      {
+        "sequence": 9,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 474,
+        "clientY": 128,
+        "screenX": 474,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281196257
+      },
+      {
+        "sequence": 10,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 524,
+        "clientY": 128,
+        "screenX": 524,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281196392
+      },
+      {
+        "sequence": 11,
+        "type": "pointerup",
+        "target": "drag",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 524,
+        "clientY": 128,
+        "screenX": 524,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281196531
+      },
+      {
+        "sequence": 12,
+        "type": "click",
+        "target": "drag",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 524,
+        "clientY": 128,
+        "screenX": 524,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281196531
+      },
+      {
+        "sequence": 13,
+        "type": "pointermove",
+        "target": "text",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281196783
+      },
+      {
+        "sequence": 14,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281196783
+      },
+      {
+        "sequence": 15,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281196925
+      },
+      {
+        "sequence": 16,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281196925
+      },
+      {
+        "sequence": 17,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "a",
+        "code": "KeyA",
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281197020
+      },
+      {
+        "sequence": 18,
+        "type": "beforeinput",
+        "target": "text",
+        "trusted": true,
+        "data": "a",
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281197020
+      },
+      {
+        "sequence": 19,
+        "type": "input",
+        "target": "text",
+        "trusted": true,
+        "data": "a",
+        "value": "a",
+        "scrollTop": 0,
+        "time": 1793281197021
+      },
+      {
+        "sequence": 20,
+        "type": "keyup",
+        "target": "text",
+        "trusted": true,
+        "key": "a",
+        "code": "KeyA",
+        "shiftKey": false,
+        "value": "a",
+        "scrollTop": 0,
+        "time": 1793281197133
+      },
+      {
+        "sequence": 21,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "b",
+        "code": "KeyB",
+        "shiftKey": false,
+        "value": "a",
+        "scrollTop": 0,
+        "time": 1793281197292
+      },
+      {
+        "sequence": 22,
+        "type": "beforeinput",
+        "target": "text",
+        "trusted": true,
+        "data": "b",
+        "value": "a",
+        "scrollTop": 0,
+        "time": 1793281197292
+      },
+      {
+        "sequence": 23,
+        "type": "input",
+        "target": "text",
+        "trusted": true,
+        "data": "b",
+        "value": "ab",
+        "scrollTop": 0,
+        "time": 1793281197293
+      },
+      {
+        "sequence": 24,
+        "type": "keyup",
+        "target": "text",
+        "trusted": true,
+        "key": "b",
+        "code": "KeyB",
+        "shiftKey": false,
+        "value": "ab",
+        "scrollTop": 0,
+        "time": 1793281197443
+      },
+      {
+        "sequence": 25,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "c",
+        "code": "KeyC",
+        "shiftKey": false,
+        "value": "ab",
+        "scrollTop": 0,
+        "time": 1793281197550
+      },
+      {
+        "sequence": 26,
+        "type": "beforeinput",
+        "target": "text",
+        "trusted": true,
+        "data": "c",
+        "value": "ab",
+        "scrollTop": 0,
+        "time": 1793281197551
+      },
+      {
+        "sequence": 27,
+        "type": "input",
+        "target": "text",
+        "trusted": true,
+        "data": "c",
+        "value": "abc",
+        "scrollTop": 0,
+        "time": 1793281197552
+      },
+      {
+        "sequence": 28,
+        "type": "keyup",
+        "target": "text",
+        "trusted": true,
+        "key": "c",
+        "code": "KeyC",
+        "shiftKey": false,
+        "value": "abc",
+        "scrollTop": 0,
+        "time": 1793281197692
+      },
+      {
+        "sequence": 29,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "👋",
+        "code": "KeyA",
+        "shiftKey": false,
+        "value": "abc",
+        "scrollTop": 0,
+        "time": 1793281197850
+      },
+      {
+        "sequence": 30,
+        "type": "beforeinput",
+        "target": "text",
+        "trusted": true,
+        "data": " 원격 검증 👋",
+        "value": "abc",
+        "scrollTop": 0,
+        "time": 1793281197851
+      },
+      {
+        "sequence": 31,
+        "type": "input",
+        "target": "text",
+        "trusted": true,
+        "data": " 원격 검증 👋",
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281197852
+      },
+      {
+        "sequence": 32,
+        "type": "wheel",
+        "target": "",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 384,
+        "screenX": 324,
+        "screenY": 539,
+        "deltaX": 0,
+        "deltaY": 200,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281198152
+      },
+      {
+        "sequence": 33,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 1,
+        "time": 1793281198152
+      },
+      {
+        "sequence": 34,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 4,
+        "time": 1793281198160
+      },
+      {
+        "sequence": 35,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 10,
+        "time": 1793281198169
+      },
+      {
+        "sequence": 36,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 17.5,
+        "time": 1793281198176
+      },
+      {
+        "sequence": 37,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 28,
+        "time": 1793281198185
+      },
+      {
+        "sequence": 38,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 40.5,
+        "time": 1793281198193
+      },
+      {
+        "sequence": 39,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 54.5,
+        "time": 1793281198201
+      },
+      {
+        "sequence": 40,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 69,
+        "time": 1793281198209
+      },
+      {
+        "sequence": 41,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 85.5,
+        "time": 1793281198218
+      },
+      {
+        "sequence": 42,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 99,
+        "time": 1793281198225
+      },
+      {
+        "sequence": 43,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 114.5,
+        "time": 1793281198235
+      },
+      {
+        "sequence": 44,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 126.5,
+        "time": 1793281198243
+      },
+      {
+        "sequence": 45,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 137,
+        "time": 1793281198252
+      },
+      {
+        "sequence": 46,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 144,
+        "time": 1793281198259
+      },
+      {
+        "sequence": 47,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 150,
+        "time": 1793281198269
+      },
+      {
+        "sequence": 48,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 153,
+        "time": 1793281198275
+      },
+      {
+        "sequence": 49,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 154,
+        "time": 1793281198285
+      },
+      {
+        "sequence": 50,
+        "type": "pointermove",
+        "target": "text",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198442
+      },
+      {
+        "sequence": 51,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198442
+      },
+      {
+        "sequence": 52,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198566
+      },
+      {
+        "sequence": 53,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198566
+      },
+      {
+        "sequence": 54,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "Shift",
+        "code": "ShiftLeft",
+        "shiftKey": true,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198724
+      },
+      {
+        "sequence": 55,
+        "type": "pointermove",
+        "target": "text",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": true,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198816
+      },
+      {
+        "sequence": 56,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": true,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198817
+      },
+      {
+        "sequence": 57,
+        "type": "keyup",
+        "target": "text",
+        "trusted": true,
+        "key": "Shift",
+        "code": "ShiftLeft",
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198910
+      },
+      {
+        "sequence": 58,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198911
+      },
+      {
+        "sequence": 59,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198911
+      },
+      {
+        "sequence": 60,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "z",
+        "code": "KeyZ",
+        "shiftKey": false,
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198985
+      },
+      {
+        "sequence": 61,
+        "type": "beforeinput",
+        "target": "text",
+        "trusted": true,
+        "data": "z",
+        "value": "abc 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281198986
+      },
+      {
+        "sequence": 62,
+        "type": "input",
+        "target": "text",
+        "trusted": true,
+        "data": "z",
+        "value": "abc 원격 검증 z",
+        "scrollTop": 0,
+        "time": 1793281198986
+      },
+      {
+        "sequence": 63,
+        "type": "keyup",
+        "target": "text",
+        "trusted": true,
+        "key": "z",
+        "code": "KeyZ",
+        "shiftKey": false,
+        "value": "abc 원격 검증 z",
+        "scrollTop": 0,
+        "time": 1793281199134
+      }
+    ],
+    "layout": {
+      "screenX": 0,
+      "screenY": 155,
+      "outerWidth": 1512,
+      "outerHeight": 827,
+      "innerWidth": 1512,
+      "innerHeight": 827,
+      "screen": {
+        "width": 1512,
+        "height": 982,
+        "availLeft": 0,
+        "availTop": 33,
+        "availWidth": 1512,
+        "availHeight": 949
+      },
+      "devicePixelRatio": 2,
+      "estimatedContentOrigin": {
+        "x": 0,
+        "y": 155
+      },
+      "note": "Estimated origin is diagnostic only; confirm content origin visually before native input.",
+      "targets": {
+        "click": {
+          "x": 24,
+          "y": 92,
+          "width": 180,
+          "height": 72,
+          "centerX": 114,
+          "centerY": 128
+        },
+        "drag": {
+          "x": 224,
+          "y": 92,
+          "width": 400,
+          "height": 72,
+          "centerX": 424,
+          "centerY": 128
+        },
+        "text": {
+          "x": 24,
+          "y": 196,
+          "width": 600,
+          "height": 80,
+          "centerX": 324,
+          "centerY": 236
+        },
+        "scroll": {
+          "x": 24,
+          "y": 304,
+          "width": 600,
+          "height": 160,
+          "centerX": 324,
+          "centerY": 384
+        }
+      }
+    },
+    "state": {
+      "text": "abc 원격 검증 z",
+      "scrollTop": 154,
+      "clicks": 1,
+      "focused": true,
+      "activeElement": "text",
+      "generation": 1,
+      "time": 1793281199260
+    }
+  },
+  "burst_events": 200,
+  "disconnect_elapsed_ms": 64.35441691428423,
+  "frames_acknowledged_during_input": 66
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Remote Desktop Performance Fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; overflow: hidden; background: #10151d; color: #dae1e9; font: 16px system-ui; }
+  header { height: 90px; padding: 18px 28px; background: #1c2635; display: flex; align-items: center; gap: 24px; }
+  h1 { font-size: 21px; margin: 0; } button { padding: 10px 20px; font: inherit; }
+  #state { color: #73ecc3; }
+  main { padding: 24px; display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+  aside, article { border: 1px solid #40516a; border-radius: 8px; background: #1c2431; padding: 22px; }
+  aside { line-height: 2.5; } pre { color: #9cd8e8; font: 15px/1.8 ui-monospace, monospace; }
+  .window { position: absolute; left: 280px; top: 160px; width: 570px; height: 400px;
+    background: #f4f5f8; color: #202733; border: 2px solid #91abd1; border-radius: 12px;
+    box-shadow: 0 15px 45px #0008; padding: 24px; animation: move 4s linear infinite alternate;
+    animation-play-state: paused; }
+  body.motion .window { animation-play-state: running; }
+  .bars { display: flex; gap: 12px; align-items: flex-end; height: 210px; padding: 18px 0; }
+  .bars i { flex: 1; background: #286dd7; border-radius: 5px 5px 0 0; }
+  @keyframes move { from { transform: translate(0, 0); } to { transform: translate(400px, 210px); } }
+</style>
+<header><h1>Remote desktop performance fixture</h1><button id="toggle">Start motion</button><strong id="state">STATIC</strong></header>
+<main>
+  <aside>WORKSPACE<br>Overview<br>Source files<br>Build results<br>CPU samples<br>Frame delivery<br>Network traffic<br>Memory usage</aside>
+  <article><h2>Reproducible capture workload</h2><pre id="code"></pre></article>
+</main>
+<section class="window"><h2>Moving application window</h2><p>CSS transform animation · 4 second traversal · synthetic desktop scene</p>
+  <div class="bars"><i style="height:35%"></i><i style="height:70%"></i><i style="height:48%"></i><i style="height:95%"></i><i style="height:64%"></i><i style="height:82%"></i><i style="height:52%"></i><i style="height:100%"></i></div>
+  <p>Only performance metadata is saved. No desktop image is stored.</p>
+</section>
+<script>
+document.querySelector('#code').textContent = Array.from({length: 32}, (_, i) =>
+  `${String(i+1).padStart(3, '0')}  async fn capture_frame_${i+1}(display: &Display) -> Result<Frame> { /* sample data */ }`).join('\n');
+document.querySelector('#toggle').onclick = () => {
+  const moving = document.body.classList.toggle('motion');
+  document.querySelector('#state').textContent = moving ? 'MOTION' : 'STATIC';
+  document.querySelector('#toggle').textContent = moving ? 'Stop motion' : 'Start motion';
+};
+</script>
+</html>

@@ -1,0 +1,24 @@
+Synthetic Enigo teardown-policy benchmark (2026-10-29)
+
+Reproduce from the repository root:
+  rustc --edition=2024 -O vendor/enigo/bench-drain.rs -o target/bench-drain
+  target/bench-drain --measure
+
+No OS events, screen capture, or native input are performed by this benchmark.
+The workload comparisons below calculate requested grace delays from synthetic
+event timestamps. They are NOT measured OS event-delivery or disconnect latency.
+The short measured cases execute only thread::sleep for each policy's result;
+macOS scheduling/timer coalescing can exceed the requested sleep duration.
+
+60 events/sec for 60 sec: original=12016.669 ms, bounded=60.000 ms requested
+250 events/sec for 1 sec: original=4004.000 ms, bounded=60.000 ms requested
+500 events immediate burst: original=10000.000 ms, bounded=60.000 ms requested
+
+Measured sleep for 20 synthetic events:
+  Original: 454.385 ms elapsed (400.000 ms requested)
+  Bounded:  114.481 ms elapsed (60.000 ms requested)
+
+The change removes input-count-dependent teardown debt. It preserves a grace
+after the latest posted event, including final key releases, without sleeps
+during input. Actual key/mouse release and reconnect latency require the native
+fixture test; these synthetic results do not establish an OS delivery guarantee.

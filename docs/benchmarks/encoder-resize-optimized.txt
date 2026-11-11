@@ -1,0 +1,15 @@
+1280x720 RGBA desktop-like moving window; 90 frames; quality=70; target=30 fps
+Encoding/conversion only. Capture, resize, network and display excluded.
+JPEG paths use 4:2:2; H264 uses 4:2:0 inter prediction. Quality scales are not equivalent.
+codec,avg_ms,p50_ms,p95_ms,avg_bytes,encode_fps,decoded_size
+image,3.940,3.912,4.058,89650,253.8,1280x720
+jpeg,3.756,3.747,3.813,73733,266.2,1280x720
+h264-screen,4.986,5.296,5.884,4319,200.6,1280x720
+h264-video,1.812,1.721,2.055,1399,551.7,1280x720
+Resize benchmark: identical opaque RGBA 1920x1080 -> 1280x720, 90 iterations; Image/Fast bilinear, Nearest lower quality
+method,mean_ms,p50_ms,p95_ms
+Image,7.701,7.700,7.780
+Fast,1.560,1.556,1.591
+Nearest,0.169,0.169,0.179
+Output validation: equal dimensions; RGB mean absolute error = 0.000425/255 (rounding differences)
+Nearest quality tradeoff: RGB mean absolute error vs bilinear = 1.730377/255; equal dimensions

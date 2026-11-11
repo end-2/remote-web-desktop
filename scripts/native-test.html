@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remote Desktop Native Verification</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #101827; color: #fff; font: 16px system-ui; }
+  h1 { margin: 18px 24px 4px; font-size: 22px; }
+  p { margin: 0 24px; color: #bbc7d8; }
+  #click, #drag, #text, #scroll { position: absolute; border: 3px solid white; border-radius: 6px; }
+  #click { left: 24px; top: 92px; width: 180px; height: 72px; background: #ff00cc; color: #111; font: bold 19px system-ui; }
+  #drag { left: 224px; top: 92px; width: 400px; height: 72px; background: #00ee99; color: #111; display: grid; place-items: center; user-select: none; touch-action: none; }
+  #text { left: 24px; top: 196px; width: 600px; height: 80px; padding: 12px; background: #fff; color: #111; font: 22px system-ui; resize: none; }
+  #scroll { left: 24px; top: 304px; width: 600px; height: 160px; overflow: auto; background: #002299; }
+  #scroll div { height: 1000px; padding: 16px; background: repeating-linear-gradient(#002299 0 80px, #0055bb 80px 160px); }
+  #status { position: absolute; left: 24px; top: 484px; white-space: pre-wrap; font: 14px ui-monospace, monospace; }
+</style>
+<h1>Native desktop verification target</h1>
+<p>Disposable controls only. Input events are reported to this local test server.</p>
+<button id="click">CLICK TARGET</button>
+<div id="drag" tabindex="0">DRAG TARGET →</div>
+<textarea id="text" autocomplete="off" spellcheck="false" placeholder="ASCII + 한글 + 👋"></textarea>
+<div id="scroll" tabindex="0"><div>SCROLL TARGET ↓<br><br>Native wheel events move these stripes.</div></div>
+<pre id="status">Waiting for native input…</pre>
+<script>
+const ids = ['click', 'drag', 'text', 'scroll'];
+const elements = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+let generation = -1, sequence = 0, queue = [], posting = false, clicks = 0;
+const state = () => ({ text: elements.text.value, scrollTop: elements.scroll.scrollTop,
+  clicks, focused: document.hasFocus(), activeElement: document.activeElement?.id,
+  generation, time: Date.now() });
+const layout = () => ({ screenX, screenY, outerWidth, outerHeight, innerWidth, innerHeight,
+  screen: {width: screen.width, height: screen.height, availLeft: screen.availLeft,
+    availTop: screen.availTop, availWidth: screen.availWidth, availHeight: screen.availHeight},
+  devicePixelRatio, estimatedContentOrigin: {x: screenX + (outerWidth - innerWidth) / 2,
+    y: screenY + outerHeight - innerHeight},
+  note: 'Estimated origin is diagnostic only; confirm content origin visually before native input.',
+  targets: Object.fromEntries(ids.map(id => { const r = elements[id].getBoundingClientRect();
+    return [id, {x: r.x, y: r.y, width: r.width, height: r.height, centerX: r.x + r.width / 2, centerY: r.y + r.height / 2}]; })) });
+function record(event) {
+  if (event.type === 'pointermove' && event.buttons === 0) return;
+  queue.push({ sequence: ++sequence, type: event.type, target: event.target.id,
+    trusted: event.isTrusted, key: event.key, code: event.code, data: event.data,
+    button: event.button, buttons: event.buttons, clientX: event.clientX,
+    clientY: event.clientY, screenX: event.screenX, screenY: event.screenY,
+    deltaX: event.deltaX, deltaY: event.deltaY, shiftKey: event.shiftKey,
+    value: event.target.value, scrollTop: event.target.scrollTop, time: Date.now() });
+}
+for (const name of ['pointerdown', 'pointerup', 'pointermove', 'click', 'keydown', 'keyup', 'beforeinput', 'input', 'wheel', 'scroll'])
+  document.addEventListener(name, record, {capture: true, passive: true});
+elements.click.addEventListener('click', () => { clicks++; });
+elements.drag.addEventListener('pointerdown', event => elements.drag.setPointerCapture(event.pointerId));
+async function report() {
+  if (posting) return;
+  posting = true;
+  const events = queue.splice(0);
+  try {
+    const response = await fetch('/report', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({events, layout: layout(), state: state()})});
+    const control = await response.json();
+    if (control.generation !== generation) {
+      generation = control.generation; sequence = 0; queue = []; clicks = 0;
+      elements.text.value = ''; elements.scroll.scrollTop = 0;
+    }
+    document.getElementById('status').textContent = `Clicks: ${clicks} | Scroll: ${elements.scroll.scrollTop}\nText: ${elements.text.value}\nFocused: ${document.hasFocus()} | Events: ${sequence}`;
+  } catch { queue.unshift(...events); }
+  finally { posting = false; }
+}
+setInterval(report, 100);
+report();
+</script>
+</html>

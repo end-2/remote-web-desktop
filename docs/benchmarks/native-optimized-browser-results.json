@@ -1,0 +1,900 @@
+{
+  "browser": "156.0.8078.48",
+  "mode": "desktop",
+  "monitor": {
+    "height": 982,
+    "id": 1,
+    "left": 0,
+    "name": "Built-in Retina Display",
+    "top": 0,
+    "width": 1512
+  },
+  "content_origin": [
+    0.0,
+    155.0
+  ],
+  "renders": [
+    {
+      "codec": "h264",
+      "color_samples": [
+        {
+          "target": "click",
+          "screen_point": [
+            44.0,
+            263.0
+          ],
+          "frame_point": [
+            37,
+            222
+          ],
+          "sample_rgb": [
+            255,
+            2,
+            203
+          ],
+          "expected_rgb": [
+            255,
+            0,
+            204
+          ],
+          "max_channel_error": 2,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "drag",
+          "screen_point": [
+            244.0,
+            263.0
+          ],
+          "frame_point": [
+            207,
+            222
+          ],
+          "sample_rgb": [
+            6,
+            236,
+            151
+          ],
+          "expected_rgb": [
+            0,
+            238,
+            153
+          ],
+          "max_channel_error": 6,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "text",
+          "screen_point": [
+            600.0,
+            411.0
+          ],
+          "frame_point": [
+            508,
+            347
+          ],
+          "sample_rgb": [
+            255,
+            255,
+            255
+          ],
+          "expected_rgb": [
+            255,
+            255,
+            255
+          ],
+          "max_channel_error": 0,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "scroll",
+          "screen_point": [
+            600.0,
+            499.0
+          ],
+          "frame_point": [
+            508,
+            422
+          ],
+          "sample_rgb": [
+            0,
+            32,
+            153
+          ],
+          "expected_rgb": [
+            0,
+            34,
+            153
+          ],
+          "max_channel_error": 2,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        }
+      ],
+      "draw_counts": {
+        "h264": 8,
+        "jpeg": 1
+      }
+    },
+    {
+      "codec": "jpeg",
+      "color_samples": [
+        {
+          "target": "click",
+          "screen_point": [
+            44.0,
+            263.0
+          ],
+          "frame_point": [
+            37,
+            222
+          ],
+          "sample_rgb": [
+            255,
+            0,
+            204
+          ],
+          "expected_rgb": [
+            255,
+            0,
+            204
+          ],
+          "max_channel_error": 0,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "drag",
+          "screen_point": [
+            244.0,
+            263.0
+          ],
+          "frame_point": [
+            207,
+            222
+          ],
+          "sample_rgb": [
+            7,
+            239,
+            156
+          ],
+          "expected_rgb": [
+            0,
+            238,
+            153
+          ],
+          "max_channel_error": 7,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "text",
+          "screen_point": [
+            600.0,
+            411.0
+          ],
+          "frame_point": [
+            508,
+            347
+          ],
+          "sample_rgb": [
+            255,
+            255,
+            255
+          ],
+          "expected_rgb": [
+            255,
+            255,
+            255
+          ],
+          "max_channel_error": 0,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        },
+        {
+          "target": "scroll",
+          "screen_point": [
+            600.0,
+            499.0
+          ],
+          "frame_point": [
+            508,
+            422
+          ],
+          "sample_rgb": [
+            0,
+            32,
+            155
+          ],
+          "expected_rgb": [
+            0,
+            34,
+            153
+          ],
+          "max_channel_error": 2,
+          "color_family_matches": true,
+          "verification": "fixture presence only; not color fidelity"
+        }
+      ],
+      "draw_counts": {
+        "h264": 9,
+        "jpeg": 6
+      }
+    }
+  ],
+  "click_count": 1,
+  "fixture": {
+    "generation": 2,
+    "events": [
+      {
+        "sequence": 1,
+        "type": "scroll",
+        "target": "scroll",
+        "trusted": true,
+        "scrollTop": 0,
+        "time": 1793281261763
+      },
+      {
+        "sequence": 2,
+        "type": "pointerdown",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263441
+      },
+      {
+        "sequence": 3,
+        "type": "pointerup",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263442
+      },
+      {
+        "sequence": 4,
+        "type": "click",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263442
+      },
+      {
+        "sequence": 5,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263550
+      },
+      {
+        "sequence": 6,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263551
+      },
+      {
+        "sequence": 7,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263551
+      },
+      {
+        "sequence": 8,
+        "type": "pointerdown",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263658
+      },
+      {
+        "sequence": 9,
+        "type": "pointerup",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263658
+      },
+      {
+        "sequence": 10,
+        "type": "click",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263658
+      },
+      {
+        "sequence": 11,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263767
+      },
+      {
+        "sequence": 12,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263774
+      },
+      {
+        "sequence": 13,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263774
+      },
+      {
+        "sequence": 14,
+        "type": "pointerdown",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263875
+      },
+      {
+        "sequence": 15,
+        "type": "pointerup",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263884
+      },
+      {
+        "sequence": 16,
+        "type": "click",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263884
+      },
+      {
+        "sequence": 17,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263986
+      },
+      {
+        "sequence": 18,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263991
+      },
+      {
+        "sequence": 19,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281263991
+      },
+      {
+        "sequence": 20,
+        "type": "pointerdown",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264093
+      },
+      {
+        "sequence": 21,
+        "type": "pointerup",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264099
+      },
+      {
+        "sequence": 22,
+        "type": "click",
+        "target": "click",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 114,
+        "clientY": 128,
+        "screenX": 114,
+        "screenY": 283,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264100
+      },
+      {
+        "sequence": 23,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264202
+      },
+      {
+        "sequence": 24,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264208
+      },
+      {
+        "sequence": 25,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264208
+      },
+      {
+        "sequence": 26,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 128,
+        "screenX": 324,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264341
+      },
+      {
+        "sequence": 27,
+        "type": "pointerdown",
+        "target": "drag",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 128,
+        "screenX": 324,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264341
+      },
+      {
+        "sequence": 28,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 364,
+        "clientY": 128,
+        "screenX": 364,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264382
+      },
+      {
+        "sequence": 29,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 404,
+        "clientY": 128,
+        "screenX": 404,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264450
+      },
+      {
+        "sequence": 30,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 444,
+        "clientY": 128,
+        "screenX": 444,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264498
+      },
+      {
+        "sequence": 31,
+        "type": "pointermove",
+        "target": "drag",
+        "trusted": true,
+        "button": -1,
+        "buttons": 1,
+        "clientX": 484,
+        "clientY": 128,
+        "screenX": 484,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264567
+      },
+      {
+        "sequence": 32,
+        "type": "pointerup",
+        "target": "drag",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 524,
+        "clientY": 128,
+        "screenX": 524,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264616
+      },
+      {
+        "sequence": 33,
+        "type": "click",
+        "target": "drag",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 524,
+        "clientY": 128,
+        "screenX": 524,
+        "screenY": 283,
+        "shiftKey": false,
+        "scrollTop": 0,
+        "time": 1793281264616
+      },
+      {
+        "sequence": 34,
+        "type": "pointerdown",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 1,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264725
+      },
+      {
+        "sequence": 35,
+        "type": "pointerup",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264733
+      },
+      {
+        "sequence": 36,
+        "type": "click",
+        "target": "text",
+        "trusted": true,
+        "button": 0,
+        "buttons": 0,
+        "clientX": 324,
+        "clientY": 236,
+        "screenX": 324,
+        "screenY": 391,
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264733
+      },
+      {
+        "sequence": 37,
+        "type": "keydown",
+        "target": "text",
+        "trusted": true,
+        "key": "👋",
+        "code": "KeyA",
+        "shiftKey": false,
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264984
+      },
+      {
+        "sequence": 38,
+        "type": "beforeinput",
+        "target": "text",
+        "trusted": true,
+        "data": "브라우저 원격 검증 👋",
+        "value": "",
+        "scrollTop": 0,
+        "time": 1793281264985
+      },
+      {
+        "sequence": 39,
+        "type": "input",
+        "target": "text",
+        "trusted": true,
+        "data": "브라우저 원격 검증 👋",
+        "value": "브라우저 원격 검증 👋",
+        "scrollTop": 0,
+        "time": 1793281264985
+      }
+    ],
+    "layout": {
+      "screenX": 0,
+      "screenY": 155,
+      "outerWidth": 1512,
+      "outerHeight": 827,
+      "innerWidth": 1512,
+      "innerHeight": 827,
+      "screen": {
+        "width": 1512,
+        "height": 982,
+        "availLeft": 0,
+        "availTop": 33,
+        "availWidth": 1512,
+        "availHeight": 949
+      },
+      "devicePixelRatio": 2,
+      "estimatedContentOrigin": {
+        "x": 0,
+        "y": 155
+      },
+      "note": "Estimated origin is diagnostic only; confirm content origin visually before native input.",
+      "targets": {
+        "click": {
+          "x": 24,
+          "y": 92,
+          "width": 180,
+          "height": 72,
+          "centerX": 114,
+          "centerY": 128
+        },
+        "drag": {
+          "x": 224,
+          "y": 92,
+          "width": 400,
+          "height": 72,
+          "centerX": 424,
+          "centerY": 128
+        },
+        "text": {
+          "x": 24,
+          "y": 196,
+          "width": 600,
+          "height": 80,
+          "centerX": 324,
+          "centerY": 236
+        },
+        "scroll": {
+          "x": 24,
+          "y": 304,
+          "width": 600,
+          "height": 160,
+          "centerX": 324,
+          "centerY": 384
+        }
+      }
+    },
+    "state": {
+      "text": "브라우저 원격 검증 👋",
+      "scrollTop": 0,
+      "clicks": 4,
+      "focused": true,
+      "activeElement": "text",
+      "generation": 2,
+      "time": 1793281265060
+    }
+  },
+  "errors": [],
+  "checks": [
+    "native H264 fixture presence",
+    "native JPEG fixture presence",
+    "trusted canvas click",
+    "eight exact alternating native clicks",
+    "trusted native browser drag",
+    "trusted Korean and emoji input"
+  ]
+}

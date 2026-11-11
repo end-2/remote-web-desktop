@@ -1,0 +1,8 @@
+{
+  "state": "server listening, no client connected",
+  "seconds": 3.30617449991405,
+  "cpu_pct_one_core": 0.0,
+  "rss_mib_min": 11.21875,
+  "rss_mib_max": 11.21875,
+  "thread_count": 16
+}

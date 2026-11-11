@@ -1,0 +1,53 @@
+{
+  "timestamp_utc": "2026-10-29T13:46:01.737252+00:00",
+  "status": "complete",
+  "server_sha256": "8a25935f93cc288c132dccce4d7ed95de3ebb0a4160671ded15412b6241df6ab",
+  "native_capture_verified": true,
+  "native_performance_measured": true,
+  "passed_checks": [
+    "23 Rust unit tests",
+    "cargo fmt --check",
+    "cargo clippy --all-targets -- -D warnings",
+    "release build",
+    "demo smoke test",
+    "Chrome browser integration test",
+    "10 native desktop capture/input checks",
+    "6 real desktop browser integration checks; no browser errors",
+    "XCap/ScreenCaptureKit and OpenH264 screen/video resource comparisons",
+    "4 JPEG transport/canvas client comparison cases"
+  ],
+  "notes": [
+    "All native/performance tests used the same packaged executable SHA-256.",
+    "Performance reports are short local-loopback measurements, not internet or long-duration benchmarks.",
+    "CPU 100% is one core; server figures exclude WindowServer, OS capture services, and GPU hardware.",
+    "Default H.264 achieved about 54.5 canvas draw FPS, not the configured 60 FPS target.",
+    "Previous resource-usage-static/motion.json describe the pre-optimization build."
+  ],
+  "native_input_verified": true,
+  "permissions": {
+    "screen_recording": "verified by actual desktop capture",
+    "accessibility": "verified by trusted OS events"
+  },
+  "verified_server_options": [
+    "--capture",
+    "sck",
+    "--h264-mode",
+    "video",
+    "--resize",
+    "fast"
+  ],
+  "native_reports": [
+    "artifacts/native-optimized-verification.json",
+    "artifacts/native-optimized-browser-results.json"
+  ],
+  "performance_reports": [
+    "artifacts/resource-optimized-xcap-screen-motion.json",
+    "artifacts/resource-optimized-sck-screen-motion.json",
+    "artifacts/resource-optimized-sck-video-motion.json",
+    "artifacts/resource-client-arraybuffer-sync.json",
+    "artifacts/resource-client-blob-sync.json",
+    "artifacts/resource-client-arraybuffer-desync.json",
+    "artifacts/resource-client-blob-desync.json",
+    "artifacts/resource-optimized-warm-idle.json"
+  ]
+}

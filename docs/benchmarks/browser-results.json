@@ -1,0 +1,11 @@
+{
+  "browser": "156.0.8078.48",
+  "initial_transport": "DEMO / H.264 / WEBCODECS",
+  "webcodecs_supported": true,
+  "jpeg_decoder_benchmark": {
+    "image_bitmap": "1.30 ms",
+    "html_image": "0.90 ms"
+  },
+  "errors": [],
+  "checks": "auth, H264 decode, JPEG variants, settings, rapid-settings merge, input, view-only, benchmark, responsive, reconnect, logout, decoder-failure recovery"
+}

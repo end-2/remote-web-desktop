@@ -1,0 +1,32 @@
+{
+  "timestamp_utc": "2026-10-29T13:45:23.484018+00:00",
+  "status": "complete",
+  "state": "warm idle after streaming and native input verification, no connected client",
+  "server_sha256": "8a25935f93cc288c132dccce4d7ed95de3ebb0a4160671ded15412b6241df6ab",
+  "seconds": 4.241384457796812,
+  "cpu_percent_one_core": 0.0,
+  "rss_mib_median": 67.234375,
+  "samples": [
+    {
+      "elapsed_seconds": 1.0746417911723256,
+      "rss_mib": 67.234375,
+      "threads": 19
+    },
+    {
+      "elapsed_seconds": 2.1407703747972846,
+      "rss_mib": 67.234375,
+      "threads": 19
+    },
+    {
+      "elapsed_seconds": 3.181776666082442,
+      "rss_mib": 67.234375,
+      "threads": 19
+    },
+    {
+      "elapsed_seconds": 4.2412927080877125,
+      "rss_mib": 67.234375,
+      "threads": 19
+    }
+  ],
+  "scope": "Rust server process only; excludes WindowServer, capture service, GPU"
+}

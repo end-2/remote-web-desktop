@@ -1,0 +1,19 @@
+/target/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+test-results/
+playwright-report/
+
+# Generated test and benchmark output
+/artifacts/
+
+# Cargo registry cache metadata in vendored crates
+/vendor/**/.cargo-ok
+/vendor/**/.cargo_vcs_info.json

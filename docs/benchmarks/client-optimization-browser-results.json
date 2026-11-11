@@ -1,0 +1,37 @@
+{
+  "browser": "156.0.8078.48",
+  "initial_transport": "DEMO / H.264 / WEBCODECS",
+  "webcodecs_supported": true,
+  "jpeg_decoder_benchmark": {
+    "image_bitmap": "1.40 ms",
+    "html_image": "0.90 ms"
+  },
+  "errors": [],
+  "checks": "auth, H264 decode, JPEG variants, JPEG Blob/ArrayBuffer delivery, settings, rapid-settings merge, input, view-only, benchmark, responsive, reconnect, logout, decoder-failure recovery",
+  "client_optimization_checks": {
+    "jpeg_blob_and_arraybuffer_switch": true,
+    "h264_remains_arraybuffer": true,
+    "fast_resolution": "1280x800",
+    "canvas_attributes": {
+      "alpha": false,
+      "colorSpace": "srgb",
+      "colorType": "unorm8",
+      "desynchronized": true,
+      "toneMapping": {
+        "mode": "standard"
+      },
+      "willReadFrequently": false
+    },
+    "errors": [],
+    "baseline_canvas_attributes": {
+      "alpha": false,
+      "colorSpace": "srgb",
+      "colorType": "unorm8",
+      "desynchronized": false,
+      "toneMapping": {
+        "mode": "standard"
+      },
+      "willReadFrequently": false
+    }
+  }
+}

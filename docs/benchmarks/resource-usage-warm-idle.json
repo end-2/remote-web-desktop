@@ -1,0 +1,8 @@
+{
+  "state": "server listening after static and motion streaming; no client connected",
+  "seconds": 4.267601124942303,
+  "cpu_pct_one_core": 0.0,
+  "rss_mib_min": 115.8125,
+  "rss_mib_max": 115.8125,
+  "thread_count": 17
+}

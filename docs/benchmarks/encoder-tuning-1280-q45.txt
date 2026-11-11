@@ -1,0 +1,15 @@
+1280x830, moving desktop fixture, 120 frames, quality=45 target=60; encode includes RGBA->YUV conversion; decode verification excluded
+OpenH264 forces scene detection on for ScreenContentRealTime; thread/detect columns are requested values.
+mode,threads,scene_detect,qp_floor,mean_ms,p50_ms,p95_ms,average_bytes,decoded_frames,luma_psnr_db
+ScreenContentRealTime,0,true,16,5.765,5.973,6.719,3969,125,51.89
+ScreenContentRealTime,0,false,16,5.757,5.988,6.586,3969,125,51.89
+ScreenContentRealTime,1,false,16,5.753,5.979,6.639,3969,125,51.89
+ScreenContentRealTime,2,false,16,5.957,6.048,7.030,3969,125,51.89
+ScreenContentRealTime,4,false,16,6.243,6.486,7.372,3969,125,51.89
+ScreenContentRealTime,0,false,29,5.992,6.310,6.522,519,125,45.63
+CameraVideoRealTime,0,true,16,3.194,3.123,3.567,4558,125,52.06
+CameraVideoRealTime,0,false,16,3.156,3.071,3.525,4558,125,52.06
+CameraVideoRealTime,1,false,16,3.110,3.041,3.332,4558,125,52.06
+CameraVideoRealTime,2,false,16,2.987,2.932,3.205,4558,125,52.06
+CameraVideoRealTime,4,false,16,2.942,2.896,3.132,4558,125,52.06
+CameraVideoRealTime,0,false,29,2.268,2.234,2.358,572,125,45.74
