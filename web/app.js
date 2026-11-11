@@ -5,6 +5,10 @@
   const canvas = $("remote-canvas");
   const viewport = $("viewport");
   const clientOptions = new URLSearchParams(location.search);
+  const requestedTransport = clientOptions.get("transport");
+  const transportPreference = ["http3", "auto", "websocket"].includes(requestedTransport) ? requestedTransport : "auto";
+  let http3Available = false;
+  const transportBenchmark = clientOptions.get("benchmark") === "1";
   // Native browser paths remain selectable for measurements on each client.
   // The low-latency canvas hint is optional; unsupported browsers ignore it.
   const context = canvas.getContext("2d", { alpha: false, desynchronized: clientOptions.get("canvas") !== "sync" });
@@ -59,6 +63,184 @@
   const heldButtons = new Set();
   const activePointers = new Set();
 
+  function transportEvent(event, transport, extra = {}) {
+    if (!transportBenchmark) return;
+    window.dispatchEvent(new CustomEvent("rwd-transport", { detail: { event, transport, ...extra } }));
+  }
+
+  if (transportBenchmark) {
+    Object.defineProperty(window, "rwdBenchmark", { value: Object.freeze({
+      ping: () => send({ type: "ping", sent: performance.now() }),
+      get transport() { return document.documentElement.dataset.transport || null; },
+    }) });
+  }
+
+  // Keep codecs, frame ACKs and input handling identical for both transports.
+  // WebTransport streams are byte streams, so each message has an explicit
+  // kind + big-endian length. A single ordered stream preserves codec changes.
+  class Http3Socket {
+    constructor() {
+      this.readyState = WebSocket.CONNECTING;
+      this.binaryType = "arraybuffer";
+      this.bufferedAmount = 0;
+      this.abort = new AbortController();
+      this.writeQueue = Promise.resolve();
+      this.timer = setTimeout(() => this.fail("HTTP/3 연결 시간이 초과되었습니다."), 4000);
+      queueMicrotask(() => this.start().catch(() => this.fail("HTTP/3 연결을 사용할 수 없습니다.")));
+    }
+
+    async start() {
+      if (this.readyState !== WebSocket.CONNECTING) return;
+      if (!window.isSecureContext || typeof WebTransport !== "function") {
+        throw new Error("WebTransport unavailable");
+      }
+      const response = await fetch("/api/transport", {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json" }, body: "{}", signal: this.abort.signal,
+      });
+      if (this.readyState !== WebSocket.CONNECTING) return;
+      if (response.status === 401) { this.finish(4401, "Authentication expired"); return; }
+      if (!response.ok) throw new Error("Transport bootstrap failed");
+      const bootstrap = await response.json();
+      if (this.readyState !== WebSocket.CONNECTING) return;
+      if (bootstrap.mode !== "webtransport" || bootstrap.protocol !== "rwd-stream-v1") throw new Error("HTTP/3 disabled");
+      const url = new URL(bootstrap.url);
+      const hashes = bootstrap.certificate_hashes || [bootstrap.certificate_hash];
+      if (url.protocol !== "https:" || url.hostname !== location.hostname || url.username || url.password || url.hash
+        || !Array.isArray(hashes) || !hashes.length || hashes.length > 2
+        || hashes.some((hash) => !Array.isArray(hash) || hash.length !== 32 || hash.some((byte) => !Number.isInteger(byte) || byte < 0 || byte > 255))) {
+        throw new Error("Invalid transport bootstrap");
+      }
+      const transport = new WebTransport(url.href, {
+        serverCertificateHashes: hashes.map((hash) => ({ algorithm: "sha-256", value: new Uint8Array(hash) })),
+      });
+      this.transport = transport;
+      // Observe both promises immediately: a rejected CONNECT can close while
+      // ready is still pending in some browser implementations.
+      transport.closed.then(
+        () => { if (!this.reader) this.finish(this.requestedClose?.code || 1006, this.requestedClose?.reason || "Connection closed"); },
+        // Once reading starts, drain the stream's already received close frame
+        // before reporting a connection error; it can carry auth/busy status.
+        () => { if (!this.reader) this.fail("HTTP/3 연결이 종료되었습니다."); },
+      );
+      await transport.ready;
+      if (this.readyState !== WebSocket.CONNECTING) { transport.close(); return; }
+      const stream = await transport.createBidirectionalStream();
+      if (this.readyState !== WebSocket.CONNECTING) { transport.close(); return; }
+      this.writer = stream.writable.getWriter();
+      this.reader = stream.readable.getReader();
+      this.readyState = WebSocket.OPEN;
+      this.onopen?.({});
+      // QUIC does not expose an outgoing stream to the server until data is
+      // written. This ping lets the server accept it and send the first hello.
+      this.send(JSON.stringify({ type: "ping", sent: performance.now() }));
+      this.readMessages().catch(() => this.fail("HTTP/3 응답을 읽지 못했습니다."));
+    }
+
+    packet(kind, bytes) {
+      const packet = new Uint8Array(5 + bytes.length);
+      packet[0] = kind;
+      new DataView(packet.buffer).setUint32(1, bytes.length);
+      packet.set(bytes, 5);
+      return packet;
+    }
+
+    send(data) {
+      if (this.readyState !== WebSocket.OPEN) throw new Error("Transport is not open");
+      const bytes = new TextEncoder().encode(data);
+      if (bytes.length > 16384 || this.bufferedAmount + bytes.length + 5 > 262144) {
+        this.fail("호스트가 입력을 처리하지 못했습니다.");
+        throw new Error("Transport send limit exceeded");
+      }
+      this.write(this.packet(0, bytes));
+    }
+
+    write(packet) {
+      this.bufferedAmount += packet.length;
+      this.writeQueue = this.writeQueue.then(() => this.writer.write(packet)).finally(() => { this.bufferedAmount -= packet.length; });
+      this.writeQueue.catch(() => this.fail("HTTP/3 전송에 실패했습니다."));
+    }
+
+    async readMessages() {
+      const header = new Uint8Array(5);
+      const textDecoder = new TextDecoder("utf-8", { fatal: true });
+      let headerOffset = 0;
+      let payload = null;
+      let payloadOffset = 0;
+      while (this.readyState < WebSocket.CLOSED) {
+        const { value, done } = await this.reader.read();
+        if (done) {
+          this.finish(this.requestedClose?.code || 1006, this.requestedClose?.reason || "Stream closed");
+          return;
+        }
+        let offset = 0;
+        while (offset < value.length && this.readyState < WebSocket.CLOSED) {
+          if (headerOffset < 5) {
+            const count = Math.min(5 - headerOffset, value.length - offset);
+            header.set(value.subarray(offset, offset + count), headerOffset);
+            headerOffset += count;
+            offset += count;
+            if (headerOffset < 5) continue;
+            const length = new DataView(header.buffer).getUint32(1);
+            if (header[0] > 2 || length > 16 * 1024 * 1024 || (header[0] !== 1 && length > 16384)) throw new Error("Invalid frame header");
+            payload = new Uint8Array(length);
+          }
+          const count = Math.min(payload.length - payloadOffset, value.length - offset);
+          payload.set(value.subarray(offset, offset + count), payloadOffset);
+          payloadOffset += count;
+          offset += count;
+          if (payloadOffset !== payload.length) continue;
+          const kind = header[0];
+          if (kind === 2) {
+            const close = JSON.parse(textDecoder.decode(payload));
+            this.finish(Number.isInteger(close.code) ? close.code : 1006, typeof close.reason === "string" ? close.reason : "");
+            return;
+          }
+          const data = kind === 0 ? textDecoder.decode(payload)
+            : this.binaryType === "blob" ? new Blob([payload]) : payload.buffer;
+          if (kind === 0) clearTimeout(this.timer);
+          this.onmessage?.({ data });
+          headerOffset = 0;
+          payloadOffset = 0;
+          payload = null;
+        }
+      }
+    }
+
+    fail(reason) {
+      if (this.readyState >= WebSocket.CLOSING) return;
+      this.onerror?.({ message: reason });
+      this.finish(1006, reason);
+    }
+
+    close(code = 1000, reason = "") {
+      if (this.readyState >= WebSocket.CLOSING) return;
+      this.readyState = WebSocket.CLOSING;
+      this.requestedClose = { code, reason };
+      this.abort.abort();
+      clearTimeout(this.timer);
+      if (!this.writer) { this.finish(code, reason); return; }
+      // Flush already queued release/input messages before closing. Bound this
+      // wait so a dead UDP path cannot retain the session indefinitely.
+      this.timer = setTimeout(() => this.finish(code, reason), 1000);
+      this.write(this.packet(2, new TextEncoder().encode(JSON.stringify({ code, reason }))));
+      // The peer's close frame can contain a more specific auth/busy code.
+      // Half-close our stream, then allow the reader to drain that response.
+      this.writeQueue.then(() => this.writer.close()).catch(() => this.finish(code, reason));
+    }
+
+    finish(code, reason) {
+      if (this.readyState === WebSocket.CLOSED) return;
+      this.readyState = WebSocket.CLOSED;
+      clearTimeout(this.timer);
+      this.abort.abort();
+      this.reader?.cancel().catch(() => {});
+      this.writer?.abort().catch(() => {});
+      this.transport?.close();
+      this.onclose?.({ code, reason });
+    }
+  }
+
   function toast(message) {
     $("toast").textContent = message;
     $("toast").hidden = false;
@@ -101,28 +283,44 @@
   }
 
   function canvasHasInput() {
-    return canControl() && document.activeElement === canvas && document.hasFocus() && !document.hidden;
+    return canMovePointer() && document.activeElement === canvas;
+  }
+
+  function canMovePointer() {
+    // Follow the host pointer on hover without taking keyboard focus. The local
+    // cursor is hidden over the image, including before the first click.
+    return canControl() && document.hasFocus() && !document.hidden
+      && $("session-panel").hidden && !$("text-dialog").open && !$("benchmark-dialog").open;
+  }
+
+  function setSessionPanel(open, focusTarget = null) {
+    if (open) releaseInputs();
+    const panel = $("session-panel");
+    const toggle = $("session-toggle");
+    const focusWasInside = panel.contains(document.activeElement);
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "설정 닫기" : "설정 열기");
+    toggle.title = `${open ? "설정 닫기" : "설정 열기"} · Ctrl + Alt + Shift`;
+    if (!open) $("shortcut-menu").open = false;
+    if (open) $("session-close").focus({ preventScroll: true });
+    else if (focusTarget || focusWasInside) (focusTarget || toggle).focus({ preventScroll: true });
+    updateInputUI();
   }
 
   function updateInputUI() {
     const enabled = canControl();
     $("text-button").disabled = !enabled;
     document.querySelectorAll("[data-shortcut]").forEach((button) => { button.disabled = !enabled; });
-    $("focus-badge").hidden = !canvasHasInput();
     $("view-only-badge").hidden = !viewOnly || !hasFrame;
     viewport.classList.toggle("control-disabled", !enabled);
     $("view-only-button").setAttribute("aria-pressed", String(viewOnly));
     $("benchmark-run-button").disabled = !connected || !hasFrame || benchmarkRunning;
-    const hint = !connected ? "다시 연결하면 원격 제어를 이어갈 수 있습니다."
-      : displayedMonitor !== settings.monitor || (pendingDesiredSettings && pendingDesiredSettings.monitor !== settings.monitor) ? "새 디스플레이의 화면을 기다리고 있습니다. 화면이 표시되면 제어할 수 있습니다."
-      : viewOnly ? "보기 전용 모드입니다. 마우스와 키보드 입력은 전송되지 않습니다."
-      : canvasHasInput() ? "원격 입력 활성 · Ctrl + Alt + Shift로 입력 해제 · 도구 모음 클릭으로도 해제됩니다."
-      : "화면을 클릭하면 원격 제어가 시작됩니다. 한글은 ‘문자 입력’을 사용하세요.";
-    $("input-hint").textContent = hint;
   }
 
   function setState(state, label) {
     $("connection-state").dataset.state = state;
+    $("session-toggle").dataset.state = state;
     $("connection-label").textContent = label;
     $("connection-button").textContent = state === "online" || state === "connecting" ? "연결 끊기" : "다시 연결";
     $("session-label").textContent = state === "online" ? "인증된 세션" : label;
@@ -136,10 +334,8 @@
     $("screen-placeholder").hidden = false;
     $("placeholder-title").textContent = title;
     $("placeholder-description").textContent = description;
-    $("placeholder-eyebrow").textContent = reconnect ? "CONNECTION STANDBY" : "ESTABLISHING CONNECTION";
     $("reconnect-button").hidden = !reconnect;
     canvas.hidden = true;
-    $("focus-badge").hidden = true;
     $("view-only-badge").hidden = true;
     viewport.classList.remove("native-size");
   }
@@ -179,6 +375,7 @@
 
   function showLogin(message = "") {
     disconnect(false);
+    setSessionPanel(false);
     $("desktop-view").hidden = true;
     $("login-view").hidden = false;
     if ($("text-dialog").open) $("text-dialog").close();
@@ -192,7 +389,9 @@
     $("login-view").hidden = true;
     $("desktop-view").hidden = false;
     $("password").value = "";
+    setSessionPanel(false);
     connect();
+    $("session-toggle").focus({ preventScroll: true });
   }
 
   function resetMetrics() {
@@ -215,6 +414,7 @@
     clearConnectionTimers();
     const oldSocket = socket;
     socket = null;
+    delete document.documentElement.dataset.transport;
     if (oldSocket && oldSocket.readyState < WebSocket.CLOSING) oldSocket.close(1000, "Client disconnected");
     resetMetrics();
     setState("offline", "연결 종료");
@@ -267,7 +467,6 @@
     }));
     applySettings(message.settings || {});
     setState("online", "연결됨");
-    if (message.mode === "demo") toast("데모 화면입니다. 실제 데스크톱에는 입력이 전달되지 않습니다.");
     const ping = () => send({ type: "ping", sent: performance.now() });
     ping();
     clearInterval(pingTimer);
@@ -279,7 +478,8 @@
   function updateTransportLabel() {
     const demo = $("demo-badge").hidden ? "" : "DEMO / ";
     const codec = settings.codec === "h264" ? "H.264 / WEBCODECS" : `${settings.codec === "image" ? "JPEG BASELINE" : "JPEG FAST"} / ${jpegRenderer === "bitmap" ? "BITMAP" : "IMAGE"}`;
-    $("transport-label").textContent = demo + codec;
+    const transport = document.documentElement.dataset.transport === "http3" ? "HTTP/3" : "WEBSOCKET";
+    $("transport-label").textContent = `${demo}${codec} / ${transport}`;
   }
 
   function updateBinaryType() {
@@ -372,7 +572,7 @@
     if (first) {
       canvas.hidden = false;
       $("screen-placeholder").hidden = true;
-      $("benchmark-status").textContent = "현재 화면으로 JPEG 디코더 성능을 비교할 수 있습니다.";
+      $("benchmark-status").textContent = "측정 준비됨";
     }
     if (first || monitorChanged) updateInputUI();
     if (first || resized) resizeCanvas();
@@ -468,10 +668,17 @@
     showPlaceholder("데스크톱에 연결하는 중", "호스트의 화면을 기다리고 있습니다.");
     setState("connecting", "연결 중");
     const thisGeneration = generation;
+    const useHttp3 = transportPreference === "http3" || (transportPreference === "auto"
+      && http3Available && window.isSecureContext && typeof WebTransport === "function");
+    openConnection(useHttp3 ? "http3" : "websocket", thisGeneration, useHttp3 && transportPreference === "auto");
+  }
+
+  function openConnection(transport, thisGeneration, allowFallback = false) {
+    if (generation !== thisGeneration || intentionalClose) return;
     const url = new URL("/ws", location.href);
     url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
     let ws;
-    try { ws = new WebSocket(url); }
+    try { ws = transport === "http3" ? new Http3Socket() : new WebSocket(url); }
     catch {
       setState("error", "연결 실패");
       showPlaceholder("연결을 시작하지 못했습니다", "브라우저의 연결 설정과 호스트 주소를 확인하세요.", true);
@@ -479,7 +686,23 @@
     }
     socket = ws;
     ws.binaryType = "arraybuffer";
+    let receivedHello = false;
+    let receivedFatalError = false;
     const isCurrent = () => generation === thisGeneration && socket === ws;
+    transportEvent("connect", transport);
+    if (transportBenchmark) {
+      const originalSend = ws.send.bind(ws);
+      ws.send = (data) => {
+        originalSend(data);
+        transportEvent("send", transport, { data });
+      };
+    }
+    ws.onopen = () => {
+      if (!isCurrent()) return;
+      document.documentElement.dataset.transport = transport;
+      transportEvent("open", transport);
+      updateTransportLabel();
+    };
     connectionTimer = setTimeout(() => {
       if (!isCurrent() || connected) return;
       lastServerError = "호스트 응답 시간이 초과되었습니다. 서버가 실행 중인지 확인하세요.";
@@ -487,6 +710,7 @@
     }, 12000);
     ws.onmessage = async (event) => {
       if (!isCurrent()) return;
+      transportEvent("message", transport, { data: typeof event.data === "string" ? event.data : { byteLength: event.data.byteLength ?? event.data.size ?? 0 } });
       if (typeof event.data === "string") {
         let message;
         try { message = JSON.parse(event.data); }
@@ -495,7 +719,7 @@
           ws.close(1002, "Invalid message");
           return;
         }
-        if (message.type === "hello") handleHello(message);
+        if (message.type === "hello") { receivedHello = true; handleHello(message); }
         else if (message.type === "settings") {
           // The server drains outstanding ACKs before applying new capture settings.
           resetDecoder();
@@ -515,6 +739,7 @@
           const detail = typeof message.message === "string" ? message.message : "호스트에서 오류가 발생했습니다.";
           if (message.recoverable) toast(detail);
           else {
+            receivedFatalError = true;
             lastServerError = detail;
             releaseInputs();
             connected = false;
@@ -551,12 +776,27 @@
         } finally { frame?.close?.(); }
       });
     };
-    ws.onerror = () => {
+    ws.onerror = (event) => {
       // The close event provides the final state; a browser intentionally hides handshake details.
-      if (isCurrent() && !lastServerError) lastServerError = "호스트에 연결할 수 없습니다. 서버 실행 상태와 네트워크를 확인하세요.";
+      if (isCurrent() && !lastServerError) lastServerError = transport === "http3" && event.message
+        ? event.message : "호스트에 연결할 수 없습니다. 서버 실행 상태와 네트워크를 확인하세요.";
     };
     ws.onclose = async (event) => {
       if (!isCurrent()) return;
+      transportEvent("close", transport, { code: event.code, reason: event.reason });
+      delete document.documentElement.dataset.transport;
+      // Application refusals belong to this session; retry only a transport
+      // failure, even if our local close races the server's final close code.
+      if (allowFallback && !receivedHello && !receivedFatalError && !intentionalClose && ![4401, 4409, 4500].includes(event.code)) {
+        clearConnectionTimers();
+        lastServerError = "";
+        // Give an accepted but failed HTTP/3 session time to release its host
+        // worker before acquiring the same single-controller slot over TCP.
+        connectionTimer = setTimeout(() => {
+          if (isCurrent()) openConnection("websocket", thisGeneration);
+        }, 200);
+        return;
+      }
       releaseInputs();
       connected = false;
       clearConnectionTimers();
@@ -588,18 +828,24 @@
 
   function flushPointer() {
     pointerTimer = null;
-    if (pendingPointer && canvasHasInput()) send({ type: "pointer", ...coordinates(pendingPointer) });
+    if (pendingPointer && canMovePointer()) send({ type: "pointer", ...coordinates(pendingPointer) });
     pendingPointer = null;
   }
 
   canvas.addEventListener("pointermove", (event) => {
-    if (!canvasHasInput() || event.isPrimary === false) return;
+    if (!canMovePointer() || event.isPrimary === false) return;
     // Coalesce before reading layout, so high-frequency mouse events need only
     // one getBoundingClientRect() per submitted pointer update.
     pendingPointer = { clientX: event.clientX, clientY: event.clientY };
     if (pointerTimer === null) pointerTimer = requestAnimationFrame(flushPointer);
   });
+  canvas.addEventListener("pointerenter", (event) => {
+    if (canMovePointer() && event.isPrimary !== false && event.pointerType !== "touch") {
+      send({ type: "pointer", ...coordinates(event) });
+    }
+  });
   canvas.addEventListener("pointerdown", (event) => {
+    if (!$("session-panel").hidden) setSessionPanel(false);
     if (!canControl() || event.isPrimary === false) return;
     const button = ["left", "middle", "right"][event.button];
     if (!button) return;
@@ -641,15 +887,8 @@
   }, { passive: false });
   canvas.addEventListener("keydown", (event) => {
     if (!canvasHasInput()) return;
-    if (event.ctrlKey && event.altKey && event.shiftKey) {
-      event.preventDefault();
-      releaseInputs();
-      $("view-only-button").focus();
-      toast("원격 입력을 해제했습니다. 화면을 클릭하면 다시 제어합니다.");
-      return;
-    }
     if (event.isComposing || event.key === "Process" || event.key === "Dead" || !event.code) {
-      toast("한글과 조합 문자는 도구 모음의 ‘문자 입력’으로 보내세요.");
+      toast("한글과 조합 문자는 설정의 ‘문자 입력’으로 보내세요.");
       return;
     }
     event.preventDefault();
@@ -680,6 +919,23 @@
     if (event.persisted && !$("desktop-view").hidden) showPlaceholder("세션이 일시 중지되었습니다", "다시 연결하여 원격 제어를 이어가세요.", true);
   });
 
+  $("session-toggle").addEventListener("click", () => setSessionPanel($("session-panel").hidden));
+  $("session-close").addEventListener("click", () => setSessionPanel(false, $("session-toggle")));
+  document.addEventListener("keydown", (event) => {
+    if ($("desktop-view").hidden || $("text-dialog").open || $("benchmark-dialog").open) return;
+    // The nonmodal panel also closes when focus is on the toggle or canvas.
+    // Leave Escape in native select menus to the browser.
+    if (!$("session-panel").hidden && event.key === "Escape" && event.target.tagName !== "SELECT") {
+      event.preventDefault();
+      event.stopPropagation();
+      setSessionPanel(false, $("session-toggle"));
+    } else if (event.ctrlKey && event.altKey && event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) setSessionPanel(true);
+    }
+  }, true);
+
   $("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if ($("login-button").disabled) return;
@@ -698,13 +954,6 @@
     $("password-toggle").textContent = show ? "숨김" : "표시";
     $("password-toggle").setAttribute("aria-pressed", String(show));
     $("password-toggle").setAttribute("aria-label", show ? "비밀번호 숨기기" : "비밀번호 표시");
-  });
-  $("logout-button").addEventListener("click", async () => {
-    $("logout-button").disabled = true;
-    disconnect();
-    try { await api("/api/logout", { method: "POST" }); showLogin(); }
-    catch (error) { toast(`로그아웃하지 못했습니다. ${error.message}`); }
-    finally { $("logout-button").disabled = false; }
   });
   $("connection-button").addEventListener("click", () => {
     if (socket && socket.readyState < WebSocket.CLOSING) disconnect();
@@ -736,12 +985,15 @@
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else if ($("desktop-view").requestFullscreen) await $("desktop-view").requestFullscreen();
-      else toast("이 브라우저에서는 전체 화면을 지원하지 않습니다.");
+      else { toast("이 브라우저에서는 전체 화면을 지원하지 않습니다."); return; }
+      setSessionPanel(false, canControl() ? canvas : $("session-toggle"));
     } catch { toast("전체 화면을 시작하지 못했습니다. 브라우저 설정을 확인하세요."); }
   });
   document.addEventListener("fullscreenchange", () => {
     const label = document.fullscreenElement ? "전체 화면 종료" : "전체 화면";
     $("fullscreen-button").setAttribute("aria-label", label);
+    $("fullscreen-button").setAttribute("aria-pressed", String(Boolean(document.fullscreenElement)));
+    $("fullscreen-label").textContent = label;
     $("fullscreen-button").title = label;
     resizeCanvas();
   });
@@ -759,11 +1011,11 @@
     if (!text) { $("remote-text").focus(); return; }
     if (!canControl()) { toast("문자를 보내려면 제어 가능한 데스크톱에 연결하세요."); return; }
     $("text-dialog").close();
-    canvas.focus({ preventScroll: true });
+    setSessionPanel(false, canvas);
     if (send({ type: "text", text })) {
       $("remote-text").value = "";
       $("text-count").textContent = "0 / 2,000";
-      toast("문자 입력 요청을 보냈습니다.");
+      toast("전송됨");
     }
   });
   document.querySelectorAll("[data-shortcut]").forEach((button) => {
@@ -771,7 +1023,7 @@
       if (!canControl()) return;
       $("shortcut-menu").open = false;
       releaseInputs();
-      canvas.focus({ preventScroll: true });
+      setSessionPanel(false, canvas);
       const modifier = isMacHost ? { code: "MetaLeft", key: "Meta" } : { code: "ControlLeft", key: "Control" };
       const letter = { copy: "c", paste: "v", "select-all": "a" }[button.dataset.shortcut];
       const keys = letter ? [modifier, { code: `Key${letter.toUpperCase()}`, key: letter }] : [{ code: "Escape", key: "Escape" }];
@@ -807,7 +1059,7 @@
   $("benchmark-apply-button").addEventListener("click", () => {
     if (!benchmarkWinner) return;
     selectRenderer(benchmarkWinner);
-    $("benchmark-status").textContent = `${benchmarkWinner === "bitmap" ? "ImageBitmap" : "HTMLImageElement"}을 JPEG 디코더로 적용했습니다.`;
+    $("benchmark-status").textContent = `${benchmarkWinner === "bitmap" ? "ImageBitmap" : "HTMLImageElement"} 적용됨`;
   });
   $("benchmark-run-button").addEventListener("click", async () => {
     if (!connected || !hasFrame || benchmarkRunning) return;
@@ -862,12 +1114,12 @@
       if (!ranked.length) throw new Error("이 브라우저에서 샘플을 디코딩하지 못했습니다.");
       benchmarkWinner = ranked[0][0];
       const name = benchmarkWinner === "bitmap" ? "ImageBitmap" : "HTMLImageElement";
-      $("benchmark-status").textContent = `측정 완료 · ${name}이 더 빠릅니다. 현재 화면 ${scratch.width} × ${scratch.height} 기준입니다.`;
+      $("benchmark-status").textContent = `${name} 권장 · ${scratch.width} × ${scratch.height}`;
       $("benchmark-apply-button").disabled = false;
     } catch (error) { $("benchmark-status").textContent = error.message; }
     finally {
       benchmarkRunning = false;
-      $("benchmark-run-button").textContent = "30회 비교 실행 ↗";
+      $("benchmark-run-button").textContent = "30회 비교 실행";
       $("renderer-select").disabled = false;
       updateInputUI();
     }
@@ -891,7 +1143,10 @@
   updateInputUI();
   $("login-button").disabled = true;
   api("/api/session")
-    .then((session) => { if (session.authenticated) enterDesktop(); })
+    .then((session) => {
+      http3Available = session.http3_available === true;
+      if (session.authenticated) enterDesktop();
+    })
     .catch((error) => loginError(error.message))
     .finally(() => { $("login-button").disabled = false; });
 })();

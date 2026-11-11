@@ -60,7 +60,10 @@ def run(args):
             hello = next(message for message in messages if message.get("type") == "hello")
             assert hello["mode"] == "desktop", "requires a non-demo desktop server"
             monitor = next(monitor for monitor in hello["monitors"] if monitor["id"] == args.monitor)
+            page.locator("#session-toggle").click()
+            expect(page.locator("#session-panel")).to_be_visible()
             page.locator("#monitor-select").select_option(str(args.monitor))
+            page.locator("#stream-settings > summary").click()
             for codec, label in (("h264", "H.264"), ("jpeg", "JPEG FAST")):
                 expect(page.locator('#codec-select option[value="h264"]')).to_be_enabled(timeout=15000)
                 before = page.evaluate("codec => window.nativeRenderCounts[codec]", codec)
@@ -73,6 +76,10 @@ def run(args):
                 renders.append({"codec": codec, "color_samples": samples,
                                 "draw_counts": page.evaluate("window.nativeRenderCounts")})
                 print(f"PASS native {codec} browser decode and four fixture color-family matches", flush=True)
+
+            # Keep the host image unobstructed before sending native coordinates.
+            page.locator("#session-close").click()
+            expect(page.locator("#session-panel")).to_be_hidden()
 
             def canvas_point(name, delta=0):
                 target, box = layout["targets"][name], canvas.bounding_box()
@@ -125,9 +132,11 @@ def run(args):
             print("PASS browser drag retained the native held button and final coordinates", flush=True)
             click_target("text")
             text = "브라우저 원격 검증 👋"
+            page.locator("#session-toggle").click()
             page.locator("#text-button").click()
             page.locator("#remote-text").fill(text)
             page.locator("#text-send-button").click()
+            expect(page.locator("#session-panel")).to_be_hidden()
             final = wait_fixture(lambda state: text in state["state"]["text"] and any(
                 event["type"] == "input" and event.get("target") == "text" and event.get("trusted")
                 for event in state["events"]), "trusted Unicode insertion from client text dialog")

@@ -25,6 +25,7 @@ openh264 = "0.9.8"
 font8x8 = "0.3"
 hostname = "0.4"
 fast_image_resize = { version = "6.1", features = ["image"] }
+wtransport = "0.7.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 screencapturekit = "11.1.1"

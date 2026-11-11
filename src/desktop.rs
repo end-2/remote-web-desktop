@@ -165,6 +165,7 @@ impl Desktop {
         let image = match &mut self.backend {
             Backend::Native {
                 monitors,
+                input,
                 capture_backend,
                 #[cfg(target_os = "macos")]
                 capture,
@@ -210,9 +211,16 @@ impl Desktop {
                 }
                 #[cfg(not(target_os = "macos"))]
                 let _ = capture_backend;
-                monitors[index].capture_image().map_err(|e| {
+                let mut image = monitors[index].capture_image().map_err(|e| {
                     format!("화면 캡처 실패. 화면 기록 권한과 디스플레이 연결을 확인하세요: {e}")
-                })?
+                })?;
+                // XCap screenshots omit the system cursor. Composite the host's
+                // position here so clients can hide their local cursor on every
+                // capture path. SCK already includes the native cursor above.
+                if let Ok(position) = input.device.enigo.location() {
+                    composite_pointer(&mut image, &self.info.monitors[index], position);
+                }
+                image
             }
             Backend::Demo { background, input } => {
                 DynamicImage::ImageRgb8(demo_frame(background, &input.device)).into_rgba8()
@@ -318,6 +326,63 @@ fn position(monitor: &MonitorInfo, x: f64, y: f64) -> Result<(i32, i32), String>
         (monitor.left as f64 + x * monitor.width.saturating_sub(1) as f64).round() as i32,
         (monitor.top as f64 + y * monitor.height.saturating_sub(1) as f64).round() as i32,
     ))
+}
+
+/// XCap has no cursor bitmap API, so use a high-contrast arrow at the host's
+/// pointer position. Scale from desktop coordinates to capture pixels (Retina
+/// screenshots can have twice the logical monitor dimensions).
+fn composite_pointer(image: &mut RgbaImage, monitor: &MonitorInfo, position: (i32, i32)) {
+    const ARROW: [&[u8]; 20] = [
+        b"W...........",
+        b"WW..........",
+        b"WBW.........",
+        b"WBBW........",
+        b"WBBBW.......",
+        b"WBBBBW......",
+        b"WBBBBBW.....",
+        b"WBBBBBBW....",
+        b"WBBBBBBBW...",
+        b"WBBBBBBBBW..",
+        b"WBBBBBBBBBW.",
+        b"WBBBBBBBBBBW",
+        b"WBBBBBWWWWWW",
+        b"WBBBWBBW....",
+        b"WBBW.WBBW...",
+        b"WBW..WBBW...",
+        b"WW....WBBW..",
+        b"W.....WBBW..",
+        b".......WW...",
+        b"............",
+    ];
+    let local_x = i64::from(position.0) - i64::from(monitor.left);
+    let local_y = i64::from(position.1) - i64::from(monitor.top);
+    if local_x < 0
+        || local_y < 0
+        || local_x >= i64::from(monitor.width)
+        || local_y >= i64::from(monitor.height)
+        || image.width() == 0
+        || image.height() == 0
+    {
+        return;
+    }
+    let scale_x = f64::from(image.width()) / f64::from(monitor.width);
+    let scale_y = f64::from(image.height()) / f64::from(monitor.height);
+    let x = (local_x as f64 * scale_x).floor() as u32;
+    let y = (local_y as f64 * scale_y).floor() as u32;
+    let width = ((ARROW[0].len() as f64 * scale_x).ceil() as u32).min(image.width() - x);
+    let height = ((ARROW.len() as f64 * scale_y).ceil() as u32).min(image.height() - y);
+    for dy in 0..height {
+        for dx in 0..width {
+            let row = (f64::from(dy) / scale_y).floor() as usize;
+            let col = (f64::from(dx) / scale_x).floor() as usize;
+            let color = match ARROW[row][col] {
+                b'W' => image::Rgba([255, 255, 255, 255]),
+                b'B' => image::Rgba([18, 18, 18, 255]),
+                _ => continue,
+            };
+            image.put_pixel(x + dx, y + dy, color);
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1269,6 +1334,54 @@ mod tests {
             .apply(&InputEvent::Scroll { dx: -2, dy: -3 }, &monitor())
             .unwrap();
         assert_eq!(input.device.calls, ["scroll:2,-3", "scroll:-2,3"]);
+    }
+
+    #[test]
+    fn xcap_pointer_uses_host_coordinates_and_capture_pixel_density() {
+        let monitor = MonitorInfo {
+            width: 40,
+            height: 30,
+            ..monitor()
+        };
+        let background = image::Rgba([80, 90, 100, 255]);
+        let mut frame = RgbaImage::from_pixel(80, 60, background);
+        composite_pointer(&mut frame, &monitor, (-1435, -96));
+        // Logical (5, 4) on a negative-origin monitor becomes Retina (10, 8).
+        assert_eq!(frame.get_pixel(10, 8).0, [255, 255, 255, 255]);
+        assert_eq!(frame.get_pixel(11, 9).0, [255, 255, 255, 255]);
+        assert_eq!(frame.get_pixel(12, 12).0, [18, 18, 18, 255]);
+        assert_eq!(*frame.get_pixel(5, 4), background);
+        assert_eq!(*frame.get_pixel(9, 8), background);
+    }
+
+    #[test]
+    fn xcap_pointer_is_absent_on_other_monitors_and_clipped_at_edges() {
+        let monitor = MonitorInfo {
+            width: 40,
+            height: 30,
+            ..monitor()
+        };
+        let background = image::Rgba([80, 90, 100, 255]);
+        let mut frame = RgbaImage::from_pixel(80, 60, background);
+        for point in [(-1441, -100), (-1440, -101), (-1400, -100), (-1440, -70)] {
+            composite_pointer(&mut frame, &monitor, point);
+        }
+        assert!(frame.pixels().all(|pixel| *pixel == background));
+        composite_pointer(&mut frame, &monitor, (-1401, -71));
+        assert_eq!(frame.get_pixel(79, 59).0, [255, 255, 255, 255]);
+        assert_eq!(*frame.get_pixel(77, 59), background);
+    }
+
+    #[test]
+    fn xcap_pointer_remains_inside_a_downscaled_capture() {
+        let monitor = MonitorInfo {
+            width: 40,
+            height: 30,
+            ..monitor()
+        };
+        let mut frame = RgbaImage::new(20, 15);
+        composite_pointer(&mut frame, &monitor, (-1401, -71));
+        assert_eq!(frame.get_pixel(19, 14).0, [255, 255, 255, 255]);
     }
 
     #[test]

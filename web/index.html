@@ -4,21 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
-    <meta name="theme-color" content="#111413">
-    <title>RELAY — 원격 데스크톱</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%23111413'/%3E%3Cpath d='M10 12h20v13H10zM16 30h8M20 25v5' stroke='%23b4f5cc' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+    <meta name="theme-color" content="#080808">
+    <title>Remote Web Desktop</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%23080808'/%3E%3Cpath d='M10 12h20v13H10zM16 30h8M20 25v5' stroke='%23eeeeee' stroke-width='2' fill='none'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/app.js" defer></script>
   </head>
   <body>
     <section id="login-view" class="login-view" aria-labelledby="login-title">
       <main class="login-main">
-        <a class="brand" href="/" aria-label="RELAY 홈">RELAY</a>
-        <h1 id="login-title">원격 데스크톱</h1>
-        <p id="login-help">호스트의 접속 비밀번호를 입력하세요.</p>
+        <h1 id="login-title">Remote Web Desktop</h1>
         <form id="login-form">
           <label for="password">접속 비밀번호</label>
-          <div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" aria-describedby="login-help" placeholder="비밀번호 입력" required maxlength="1024"><button id="password-toggle" class="password-toggle" type="button" aria-label="비밀번호 표시" aria-pressed="false">표시</button></div>
+          <div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호 입력" required maxlength="1024"><button id="password-toggle" class="password-toggle" type="button" aria-label="비밀번호 표시" aria-pressed="false">표시</button></div>
           <p id="login-error" class="form-error" role="alert" hidden></p>
           <button id="login-button" class="button button-primary login-button" type="submit"><span>데스크톱 연결</span></button>
         </form>
@@ -26,42 +24,86 @@
     </section>
 
     <main id="desktop-view" class="desktop-view" hidden>
-      <header class="app-header">
-        <a class="brand" href="/" aria-label="RELAY 홈"><span class="brand-mark" aria-hidden="true">↗</span> RELAY<span class="brand-tag">REMOTE DESKTOP</span></a>
-        <div class="host-identity"><span class="host-symbol" aria-hidden="true">▣</span><div><strong id="hostname">원격 데스크톱</strong><span id="host-platform">호스트 확인 중</span></div><span id="demo-badge" class="demo-badge" hidden>DEMO</span></div>
-        <div class="header-actions"><span id="connection-state" class="connection-state" role="status"><span class="signal-dot"></span><span id="connection-label">연결 중</span></span><button id="connection-button" class="button button-subtle" type="button">연결 끊기</button><button id="logout-button" class="button button-subtle" type="button">로그아웃 <span aria-hidden="true">↗</span></button></div>
-      </header>
-      <section class="toolbar" aria-label="원격 데스크톱 설정">
-        <div class="toolbar-group selectors">
-          <label class="select-field" for="monitor-select"><span>디스플레이</span><select id="monitor-select" disabled><option value="1">확인 중</option></select></label>
-          <span class="toolbar-divider" aria-hidden="true"></span>
-          <label class="select-field" for="performance-select"><span>스트리밍</span><select id="performance-select" disabled><option value="balanced">균형 · 15 FPS</option><option value="smooth">부드럽게 · 30 FPS</option><option value="fast">성능 우선 · 60 FPS / 1280</option><option value="fast_hq">고해상도 · 60 FPS / 1600</option><option value="sharp">선명하게 · 15 FPS</option><option value="light">데이터 절약 · 10 FPS</option><option value="custom" hidden>사용자 설정</option></select></label>
-          <label class="select-field" for="codec-select"><span class="sr-only">화면 코덱</span><select id="codec-select" disabled aria-label="화면 코덱"><option value="auto">자동 · H.264 우선</option><option value="h264">H.264 · WebCodecs</option><option value="jpeg">JPEG · 고속 인코더</option><option value="image">JPEG · 기본 인코더</option></select></label>
-        </div>
-        <div class="toolbar-group control-tools">
-          <button id="view-only-button" class="tool-button" type="button" aria-pressed="false" title="입력을 보내지 않고 화면만 봅니다"><span class="toggle-track" aria-hidden="true"><span></span></span>보기 전용</button>
-          <span class="toolbar-divider" aria-hidden="true"></span>
-          <button id="text-button" class="tool-button" type="button" disabled><span class="text-icon" aria-hidden="true">T</span>문자 입력</button>
-          <details id="shortcut-menu" class="shortcut-menu"><summary class="tool-button" aria-label="원격 단축키"><span aria-hidden="true">⌘</span><span class="shortcut-label">단축키</span><span class="chevron" aria-hidden="true">⌄</span></summary><div class="shortcut-dropdown"><span class="eyebrow">SEND TO HOST</span><button type="button" data-shortcut="escape"><span>Escape</span><kbd>Esc</kbd></button><button type="button" data-shortcut="copy"><span>복사</span><kbd id="copy-label">Ctrl C</kbd></button><button type="button" data-shortcut="paste"><span>호스트에서 붙여넣기</span><kbd id="paste-label">Ctrl V</kbd></button><button type="button" data-shortcut="select-all"><span>전체 선택</span><kbd id="select-all-label">Ctrl A</kbd></button></div></details>
-        </div>
-      </section>
       <section id="workspace" class="workspace" aria-label="원격 화면 작업 공간">
-        <div class="workspace-topline"><div><span class="eyebrow">LIVE WORKSPACE</span><span id="screen-size" class="screen-size">— × —</span></div><div class="screen-tools"><button id="benchmark-button" class="tool-button compact" type="button">성능 비교</button><button id="fit-button" class="tool-button compact" type="button" aria-pressed="true" title="화면 맞춤과 원본 크기 전환"><span aria-hidden="true">⊡</span><span id="fit-label">화면 맞춤</span></button><button id="fullscreen-button" class="tool-button compact" type="button" title="전체 화면" aria-label="전체 화면"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button></div></div>
         <div id="viewport" class="viewport">
-          <canvas id="remote-canvas" width="1" height="1" tabindex="0" aria-label="원격 데스크톱 화면. 클릭하면 키보드와 마우스 입력을 호스트로 전달합니다. Ctrl, Alt, Shift를 함께 누르면 입력을 해제하고 도구 모음으로 돌아갑니다." hidden></canvas>
-          <div id="screen-placeholder" class="screen-placeholder"><div id="placeholder-icon" class="placeholder-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="5" y="7" width="38" height="27" rx="3"/><path d="M16 42h16M24 34v8M18 20l4 4 8-8"/></svg></div><span id="placeholder-eyebrow" class="eyebrow">ESTABLISHING CONNECTION</span><h2 id="placeholder-title">데스크톱에 연결하는 중</h2><p id="placeholder-description">호스트의 화면을 기다리고 있습니다.</p><button id="reconnect-button" class="button button-primary" type="button" hidden>다시 연결 <span aria-hidden="true">↗</span></button></div>
-          <span id="focus-badge" class="focus-badge" hidden><span class="signal-dot"></span>원격 입력 활성</span>
-          <span id="view-only-badge" class="view-only-badge" hidden>보기 전용</span>
+          <canvas id="remote-canvas" width="1" height="1" tabindex="0" aria-label="원격 데스크톱 화면. 클릭하면 키보드와 마우스 입력을 호스트로 전달합니다. Ctrl, Alt, Shift를 함께 누르면 입력을 해제하고 설정을 엽니다." hidden></canvas>
+          <div id="screen-placeholder" class="screen-placeholder">
+            <div id="placeholder-icon" class="placeholder-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="5" y="7" width="38" height="27" rx="3"/><path d="M16 42h16M24 34v8M18 20l4 4 8-8"/></svg></div>
+            <h2 id="placeholder-title">데스크톱에 연결하는 중</h2>
+            <p id="placeholder-description">호스트의 화면을 기다리고 있습니다.</p>
+            <button id="reconnect-button" class="button button-primary" type="button" hidden>다시 연결 <span aria-hidden="true">↗</span></button>
+          </div>
         </div>
-        <footer class="workspace-footer"><p id="input-hint"><span class="hint-key" aria-hidden="true">↖</span>화면을 클릭하면 원격 제어가 시작됩니다.</p><span id="monitor-name" class="eyebrow">DISPLAY —</span></footer>
+        <span id="view-only-badge" class="view-only-badge" hidden>보기 전용</span>
       </section>
-      <footer class="statusbar"><div class="statusbar-leading"><span class="status-marker" aria-hidden="true"></span><span id="session-label">세션 연결 중</span><span id="transport-label" class="transport-label">JPEG / WEBSOCKET</span></div><div class="metrics" aria-label="연결 성능"><span><b id="fps-metric">—</b> FPS</span><span title="호스트 왕복 지연"><b id="latency-metric">—</b> ms</span><span title="브라우저 디코딩과 화면 그리기 평균 시간" class="render-metric"><b id="render-metric">—</b> ms render</span><span><b id="bandwidth-metric">—</b> Mbps</span></div></footer>
-    </main>
-    <dialog id="text-dialog" class="text-dialog" aria-labelledby="text-dialog-title">
-      <form id="text-form"><div class="dialog-heading"><span class="eyebrow">SEND TEXT</span><button id="text-close-button" class="icon-button" type="button" aria-label="문자 입력 닫기">×</button></div><h2 id="text-dialog-title">문자를 호스트로 보내기</h2><p id="text-dialog-help">한글이나 긴 문장은 이곳에 입력하세요.<br>호스트에서 현재 선택한 입력란에 문자가 입력됩니다.</p><label for="remote-text" class="sr-only">전송할 문자</label><textarea id="remote-text" maxlength="2000" rows="5" placeholder="전송할 문자를 입력하세요…" aria-describedby="text-dialog-help"></textarea><div class="text-dialog-footer"><span id="text-count">0 / 2,000</span><button id="text-send-button" class="button button-primary" type="submit">문자 전송 <span aria-hidden="true">↗</span></button></div></form>
+
+      <button id="session-toggle" class="session-toggle" type="button" aria-label="설정 열기" aria-controls="session-panel" aria-expanded="false" aria-keyshortcuts="Control+Alt+Shift" title="설정 열기 · Ctrl + Alt + Shift">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h5m4 0h5M3 15h2m4 0h8"/><circle cx="10" cy="5" r="2"/><circle cx="7" cy="15" r="2"/></svg>
+        <span class="session-toggle-label">설정</span>
+        <span class="signal-dot" aria-hidden="true"></span>
+      </button>
+      <aside id="session-panel" class="session-panel" aria-labelledby="session-title" hidden>
+        <header class="panel-header">
+          <h1 id="session-title">설정</h1>
+          <button id="session-close" class="icon-button" type="button" aria-label="설정 닫기" title="설정 닫기 · Esc"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button>
+        </header>
+        <div class="panel-body">
+          <section class="host-card" aria-label="연결한 호스트">
+            <div class="host-identity"><span class="host-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><div><strong id="hostname">원격 데스크톱</strong><span id="host-platform">호스트 확인 중</span></div><span id="demo-badge" class="demo-badge" hidden>DEMO</span></div>
+            <span id="connection-state" class="connection-state" role="status"><span class="signal-dot"></span><span id="connection-label">연결 중</span></span>
+          </section>
+          <section class="panel-section" aria-labelledby="display-title">
+            <h2 id="display-title">화면</h2>
+            <label class="select-field" for="monitor-select"><span>디스플레이</span><select id="monitor-select" disabled><option value="1">확인 중</option></select></label>
+            <div class="screen-tools">
+              <button id="fit-button" class="tool-button" type="button" aria-pressed="true" title="화면 맞춤과 원본 크기 전환"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M6 10h8m-6-2-2 2 2 2m4-4 2 2-2 2"/></svg><span id="fit-label">화면 맞춤</span></button>
+              <button id="fullscreen-button" class="tool-button" type="button" aria-pressed="false" title="전체 화면" aria-label="전체 화면"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg><span id="fullscreen-label">전체 화면</span></button>
+            </div>
+          </section>
+          <section class="panel-section" aria-labelledby="input-title">
+            <h2 id="input-title">입력</h2>
+            <button id="view-only-button" class="tool-button option-row" type="button" aria-pressed="false" title="입력을 보내지 않고 화면만 봅니다"><span>보기 전용</span><span class="toggle-track" aria-hidden="true"><span></span></span></button>
+            <button id="text-button" class="tool-button option-row" type="button" disabled><span>문자 입력</span><span class="text-icon" aria-hidden="true">T</span></button>
+            <details id="shortcut-menu" class="shortcut-menu"><summary class="tool-button option-row"><span>원격 단축키</span><svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"/></svg></summary><div class="shortcut-dropdown"><button type="button" data-shortcut="escape"><span>Escape</span><kbd>Esc</kbd></button><button type="button" data-shortcut="copy"><span>복사</span><kbd id="copy-label">Ctrl C</kbd></button><button type="button" data-shortcut="paste"><span>호스트에서 붙여넣기</span><kbd id="paste-label">Ctrl V</kbd></button><button type="button" data-shortcut="select-all"><span>전체 선택</span><kbd id="select-all-label">Ctrl A</kbd></button></div></details>
+          </section>
+          <details id="stream-settings" class="panel-section panel-details">
+            <summary>화질 및 스트리밍<svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"/></svg></summary>
+            <div class="details-content">
+              <label class="select-field" for="performance-select"><span>화질 설정</span><select id="performance-select" disabled><option value="balanced">균형 · 15 FPS</option><option value="smooth">부드럽게 · 30 FPS</option><option value="fast">성능 우선 · 60 FPS / 1280</option><option value="fast_hq">고해상도 · 60 FPS / 1600</option><option value="sharp">선명하게 · 15 FPS</option><option value="light">데이터 절약 · 10 FPS</option><option value="custom" hidden>사용자 설정</option></select></label>
+              <label class="select-field" for="codec-select"><span>화면 코덱</span><select id="codec-select" disabled><option value="auto">자동 · H.264 우선</option><option value="h264">H.264 · WebCodecs</option><option value="jpeg">JPEG · 고속 인코더</option><option value="image">JPEG · 기본 인코더</option></select></label>
+            </div>
+          </details>
+          <details id="connection-details" class="panel-section panel-details">
+            <summary>연결 정보<svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"/></svg></summary>
+            <div class="details-content">
+              <p id="session-label" class="session-label">세션 연결 중</p>
+              <div class="metrics" aria-label="연결 성능"><div><span>프레임</span><strong><b id="fps-metric">—</b> <small>FPS</small></strong></div><div title="호스트 왕복 지연"><span>응답 시간</span><strong><b id="latency-metric">—</b> <small>ms</small></strong></div><div title="브라우저 디코딩과 화면 그리기 평균 시간"><span>화면 처리</span><strong><b id="render-metric">—</b> <small>ms</small></strong></div><div><span>수신 속도</span><strong><b id="bandwidth-metric">—</b> <small>Mbps</small></strong></div></div>
+              <div class="stream-info"><span id="monitor-name">DISPLAY —</span><span id="screen-size">— × —</span><span id="transport-label">JPEG / WEBSOCKET</span></div>
+              <button id="benchmark-button" class="tool-button option-row" type="button"><span>성능 비교</span><span aria-hidden="true">↗</span></button>
+            </div>
+          </details>
+        </div>
+        <footer class="panel-footer"><button id="connection-button" class="button button-disconnect" type="button">연결 끊기</button></footer>
+      </aside>
+    <dialog id="text-dialog" class="text-dialog text-entry-dialog" aria-labelledby="text-dialog-title">
+      <form id="text-form">
+        <div class="dialog-heading"><h2 id="text-dialog-title">문자 입력</h2><button id="text-close-button" class="icon-button" type="button" aria-label="문자 입력 닫기">×</button></div>
+        <label for="remote-text" class="sr-only">전송할 문자</label>
+        <textarea id="remote-text" maxlength="2000" rows="5" placeholder="텍스트 입력"></textarea>
+        <div class="text-dialog-footer"><span id="text-count">0 / 2,000</span><button id="text-send-button" class="button button-primary" type="submit">전송</button></div>
+      </form>
     </dialog>
-    <dialog id="benchmark-dialog" class="text-dialog benchmark-dialog" aria-labelledby="benchmark-title"><div class="dialog-heading"><span class="eyebrow">NATIVE PERFORMANCE LAB</span><button id="benchmark-close-button" class="icon-button" type="button" aria-label="성능 비교 닫기">×</button></div><h2 id="benchmark-title">이 브라우저에 맞는 성능</h2><p>H.264는 브라우저의 WebCodecs로 재생합니다. JPEG는 현재 화면 샘플로 두 내장 디코더를 각각 30회 비교하고, 더 빠른 방식을 선택할 수 있습니다.</p><div class="capability-row"><span>H.264 / WebCodecs</span><strong id="webcodecs-support">확인 중</strong></div><label class="renderer-select" for="renderer-select"><span>JPEG 디코더</span><select id="renderer-select"><option value="bitmap">ImageBitmap</option><option value="image">HTMLImageElement</option></select></label><label class="renderer-select" for="jpeg-transport-select"><span>JPEG 수신 방식</span><select id="jpeg-transport-select"><option value="blob">Blob 직접 디코딩</option><option value="arraybuffer">ArrayBuffer 비교 경로</option></select></label><div class="benchmark-results"><div class="benchmark-result"><span>ImageBitmap</span><strong id="bitmap-result">—<small> ms</small></strong></div><div class="benchmark-result"><span>HTMLImageElement</span><strong id="image-result">—<small> ms</small></strong></div></div><p class="benchmark-note">수치는 디코딩 + 그리기 제출 시간의 중앙값입니다. 네트워크·호스트 인코딩 시간과 화면 표시 완료 시간은 제외됩니다.</p><p id="benchmark-status" class="benchmark-status" role="status">원격 화면에 연결한 후 측정할 수 있습니다.</p><div class="benchmark-actions"><button id="benchmark-run-button" class="button button-primary" type="button" disabled>30회 비교 실행 <span aria-hidden="true">↗</span></button><button id="benchmark-apply-button" class="button button-subtle" type="button" disabled>빠른 방식 적용</button></div></dialog>
+    <dialog id="benchmark-dialog" class="text-dialog benchmark-dialog" aria-labelledby="benchmark-title">
+      <div class="dialog-heading"><h2 id="benchmark-title">성능 비교</h2><button id="benchmark-close-button" class="icon-button" type="button" aria-label="성능 비교 닫기">×</button></div>
+      <div class="capability-row"><span>H.264 / WebCodecs</span><strong id="webcodecs-support">확인 중</strong></div>
+      <label class="renderer-select" for="renderer-select"><span>JPEG 디코더</span><select id="renderer-select"><option value="bitmap">ImageBitmap</option><option value="image">HTMLImageElement</option></select></label>
+      <label class="renderer-select" for="jpeg-transport-select"><span>JPEG 수신 방식</span><select id="jpeg-transport-select"><option value="blob">Blob 직접 디코딩</option><option value="arraybuffer">ArrayBuffer 비교 경로</option></select></label>
+      <div class="benchmark-results" aria-label="디코딩 및 그리기 제출 시간 중앙값, 30회 측정"><div class="benchmark-result"><span>ImageBitmap</span><strong id="bitmap-result">—<small> ms</small></strong></div><div class="benchmark-result"><span>HTMLImageElement</span><strong id="image-result">—<small> ms</small></strong></div></div>
+      <p id="benchmark-status" class="benchmark-status" role="status">연결 대기 중</p>
+      <div class="benchmark-actions"><button id="benchmark-run-button" class="button button-primary" type="button" disabled>30회 비교 실행</button><button id="benchmark-apply-button" class="button button-subtle" type="button" disabled>빠른 방식 적용</button></div>
+    </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </main>
     <noscript><p class="noscript">원격 데스크톱을 사용하려면 JavaScript를 활성화하세요.</p></noscript>
   </body>
 </html>

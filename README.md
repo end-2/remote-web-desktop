@@ -2,7 +2,7 @@
 
 제어받는 PC에서 Rust 서버를 실행하고, 다른 기기의 웹 브라우저로 화면을 보면서 마우스와 키보드를 조작하는 원격 데스크톱입니다. 클라이언트 설치가 필요하지 않습니다.
 
-Axum/Tokio 서버, 네이티브 화면 캡처, H.264/JPEG 바이너리 WebSocket 전송으로 구성합니다. 서버는 OpenH264·ScreenCaptureKit/XCap·Enigo를, 브라우저는 WebCodecs·Canvas와 내장 JPEG 디코더를 활용합니다. 프레임 확인 응답(ACK)과 최대 2프레임 파이프라인으로 느린 연결에서 오래된 화면이 계속 쌓이지 않도록 합니다. 코덱·FPS·화질·전송 해상도를 조절할 수 있습니다. 기본 전송 설정은 성능 우선인 **60 FPS 목표·화질 45·최대 너비 1280**이며, 실제 60 FPS 달성을 보장하는 값은 아닙니다. 실제 성능은 화면 크기, 화면 변화량, 호스트 CPU와 네트워크에 따라 달라집니다.
+Axum/Tokio 서버, 네이티브 화면 캡처, H.264/JPEG 바이너리 전송으로 구성합니다. WebSocket과 선택적으로 활성화하는 **HTTP/3 WebTransport**가 같은 캡처·인코딩·입력 처리 경로를 사용합니다. 서버는 OpenH264·ScreenCaptureKit/XCap·Enigo를, 브라우저는 WebCodecs·Canvas와 내장 JPEG 디코더를 활용합니다. 프레임 확인 응답(ACK)과 최대 2프레임 파이프라인으로 느린 연결에서 오래된 화면이 계속 쌓이지 않도록 합니다. 코덱·FPS·화질·전송 해상도를 조절할 수 있습니다. 기본 전송 설정은 성능 우선인 **60 FPS 목표·화질 45·최대 너비 1280**이며, 실제 60 FPS 달성을 보장하는 값은 아닙니다. 실제 성능은 화면 크기, 화면 변화량, 호스트 CPU와 네트워크에 따라 달라집니다.
 
 ## 빠른 시작
 
@@ -55,9 +55,11 @@ cargo run --release -- --host 0.0.0.0 --port 8080
 
 같은 네트워크의 클라이언트에서 `http://제어받는-PC의-IP:8080`을 엽니다. 호스트의 방화벽에서 접속할 네트워크에 대해 TCP 8080을 허용해야 합니다. 인터넷에서는 아래 HTTPS 구성이나 신뢰하는 VPN을 사용하세요. 서버 자체는 HTTP를 제공하며, 평문 HTTP는 접속 암호와 화면 내용을 암호화하지 않습니다.
 
-로그인 후 연결하면 원격 화면이 표시됩니다. 화면을 클릭하여 키보드 포커스를 주고 마우스·드래그·휠·키보드를 사용합니다. 한 번에 한 클라이언트만 제어할 수 있습니다. 연결을 종료하거나 로그아웃하면 제어 권한이 해제됩니다.
+로그인 후 원격 화면이 브라우저의 전체 작업 공간을 채웁니다. 오른쪽 가장자리의 **설정** 버튼으로 반투명 블랙 패널을 열어 디스플레이, 화면 맞춤·원본 크기, 전체 화면, 보기 전용, 문자 입력과 단축키를 사용합니다. 화질·코덱은 **화질 및 스트리밍**, 성능 지표·디코더 비교는 **연결 정보**를 펼쳐 확인합니다. 패널은 화면 위에 겹쳐 열리므로 원격 화면 크기와 마우스 좌표가 바뀌지 않습니다.
 
-원격 화면에 키보드 포커스가 잡혔을 때 **Ctrl+Alt+Shift**를 함께 누르면 입력을 해제하고 로컬 도구 모음으로 돌아옵니다. 보기 전용 모드에서는 화면만 확인할 수 있습니다.
+원격 화면에서는 로컬 커서를 숨기고 호스트의 포인터만 표시합니다. 마우스를 올리면 원격 포인터가 따라 움직이고, 화면을 클릭하면 키보드 입력도 전달합니다. macOS ScreenCaptureKit은 실제 OS 커서 모양을 영상에 포함합니다. XCap 경로는 실제 호스트 좌표에 기본 화살표를 합성하며 텍스트·크기 조절 커서 모양이나 OS 커서 숨김 상태는 재현하지 않습니다. 호스트 좌표를 읽지 못하거나 선택한 모니터 밖에 있으면 XCap 포인터를 표시하지 않습니다. 설정과 대화상자에서는 로컬 커서가 표시됩니다.
+
+**Ctrl+Alt+Shift**를 함께 누르면 눌린 입력을 해제하고 설정을 엽니다. 패널의 닫기 버튼이나 **Esc**로 닫고, 원격 화면을 클릭하여 제어를 이어갑니다. 보기 전용 모드에서는 마우스와 키보드 입력을 전송하지 않습니다. 한 번에 한 클라이언트만 제어할 수 있으며 **연결 끊기**로 제어 권한을 해제합니다.
 
 H.264는 브라우저가 WebCodecs의 AVC 디코딩을 지원할 때 사용할 수 있습니다. 일반적으로 HTTPS 또는 localhost에서 활성화되며, 지원되지 않는 브라우저와 평문 LAN 접속에서는 JPEG를 사용합니다. 브라우저에 따라 AVC 지원이 다르므로 클라이언트가 지원 여부를 확인합니다.
 
@@ -132,6 +134,8 @@ scripts/package-macos.sh stop
 | --- | --- | --- |
 | `--host` / `RWD_HOST` | `127.0.0.1` | 서버가 수신할 IP 주소 |
 | `--port` / `RWD_PORT` | `8080` | HTTP/WebSocket 포트 |
+| `--http3-port` / `RWD_HTTP3_PORT` | 꺼짐 | HTTP/3 WebTransport의 UDP 포트 |
+| `--http3-host` / `RWD_HTTP3_HOST` | `--host`와 같음 | HTTP 리스너와 다른 IP에서 UDP 수신. `--http3-port`와 함께 사용 |
 | `RWD_PASSWORD` | 시작할 때 생성 | 접속 암호. 직접 지정할 때 UTF-8 기준 1–1024바이트 (12바이트 이상 권장) |
 | `--demo` | 꺼짐 | 테스트 화면을 생성하고 실제 데스크톱 입력을 수행하지 않음 |
 | `--public-origin` / `RWD_PUBLIC_ORIGIN` | `http://` + 요청 Host | HTTPS 프록시를 사용할 때 외부 접속 주소 지정 |
@@ -155,7 +159,7 @@ export RWD_PASSWORD='여기에-12자-이상의-고유한-암호'
 
 ## HTTPS로 운영
 
-호스트의 도메인과 HTTPS 인증서를 준비하고, Rust 서버 앞에 역방향 프록시를 둡니다. [Caddy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)는 WebSocket 업그레이드를 지원합니다.
+호스트의 도메인과 HTTPS 인증서를 준비하고, Rust 서버 앞에 역방향 프록시를 둡니다. [Caddy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)는 WebSocket 업그레이드를 지원합니다. 예제는 웹페이지와 API에 HTTP/1.1·HTTP/2·HTTP/3를 허용합니다. Caddy의 [HTTP/3 설정](https://caddyserver.com/docs/caddyfile/options#protocols)을 사용하는 경우 UDP 443에도 도달할 수 있어야 합니다. 페이지가 HTTP/3로 로드되는 것과 원격 화면의 전송 방식은 별개입니다.
 
 ```sh
 ./target/release/remote-web-desktop \
@@ -173,6 +177,49 @@ caddy run --config deploy/Caddyfile.example --adapter caddyfile
 도메인의 DNS는 프록시가 실행되는 호스트를 가리켜야 합니다. 외부에서 HTTPS 인증서 발급과 접속에 필요한 포트에 도달할 수 있어야 합니다. 브라우저에서는 `https://remote.example.com`으로 접속합니다. `--public-origin`에는 브라우저 주소와 같은 스킴·호스트·포트를 지정하며 경로를 넣지 않습니다. 인터넷으로 노출하는 경우 Rust 서버의 8080 포트를 직접 열지 말고 프록시를 통해 접속하도록 구성하세요.
 
 이 서버에는 NAT 탐색, 중계 서버, 계정 관리, 다중 사용자 권한 관리가 포함되지 않습니다. 공유기 뒤에 있는 호스트에 외부에서 접속하려면 별도로 VPN 또는 네트워크 라우팅을 구성해야 합니다.
+
+### HTTP/3로 화면과 입력 전송
+
+```sh
+./target/release/remote-web-desktop --host 127.0.0.1 --port 8080 --http3-port 8081
+```
+
+기본값은 **자동 선택**입니다. 서버에서 HTTP/3를 켜고 브라우저가 지원하면 HTTP/3를 우선하며, 연결 실패 시 WebSocket으로 전환합니다. HTTP/3가 꺼져 있거나 브라우저가 지원하지 않으면 바로 WebSocket으로 연결합니다. `http://127.0.0.1:8080/?transport=http3`는 HTTP/3를 지정하고, `?transport=websocket`은 기존 전송 방식을 지정합니다. `?transport=auto`는 기본 자동 선택과 같습니다. `http3` 지정은 비교 실험을 위해 연결 실패를 그대로 표시합니다. 실제 방식은 설정 → 연결 정보에 표시하며, 캔버스에는 별도 버튼을 추가하지 않습니다.
+
+화면과 입력은 [wtransport](https://docs.rs/wtransport/0.7.2/wtransport/)의 QUIC/HTTP/3 연결을 통해 전송합니다. 순서가 필요한 H.264 프레임과 입력 이벤트를 하나의 신뢰성 있는 양방향 스트림에 담습니다. 기존 코덱, 화질, 최대 두 프레임 ACK 제어, 단일 제어자 제한과 세션 만료 처리를 공유합니다. 프레임을 유실시키는 datagram 방식이나 다중 스트림 최적화는 사용하지 않습니다.
+
+브라우저의 [WebTransport API](https://w3c.github.io/webtransport/)와 보안 컨텍스트(HTTPS 또는 localhost)가 필요합니다. 인증된 같은 출처 요청으로 짧은 수명의 일회용 연결 티켓과 인증서 해시를 받아 연결합니다. 세션 쿠키는 계속 HttpOnly로 유지합니다. HTTP/3 인증서는 서버가 관리하며 OS에 새로운 루트 인증서를 설치하지 않습니다. 일반 LAN의 `http://IP:8080`은 보안 컨텍스트가 아니므로 HTTPS 구성이 필요합니다. HTTP/3는 지정한 UDP 포트로 직접 연결하며, Caddy의 일반 `reverse_proxy` 설정이 이 WebTransport 연결을 대신 중계하지 않습니다.
+
+HTTP/3를 켜도 Rust의 웹페이지·로그인 API는 기존 HTTP 리스너에서 제공됩니다. 웹페이지·API까지 HTTP/3로 제공하려면 위 HTTPS 프록시를 함께 구성합니다.
+
+HTTPS 프록시 뒤에서 외부 WebTransport 접속을 허용할 때는 HTTP를 루프백에 남기고 UDP 주소만 별도로 지정할 수 있습니다. 예를 들어 `--host 127.0.0.1 --port 8080 --http3-host 0.0.0.0 --http3-port 8081 --public-origin https://remote.example.com --secure-cookie`로 실행하고 UDP 8081만 해당 호스트로 라우팅합니다. 기본 실행은 외부 수신 주소나 방화벽 설정을 변경하지 않습니다.
+
+전송 비교는 별도 데모 서버에서 실행할 수 있습니다. `RWD_PASSWORD`는 서버와 측정 프로세스에 같은 값으로 설정합니다.
+
+```sh
+./target/release/remote-web-desktop --demo --port 18080 --http3-port 18081
+# 다른 터미널: PID는 위 서버 프로세스의 PID
+uv run --with playwright python scripts/transport_test.py http://127.0.0.1:18080
+uv run --with playwright --with psutil python scripts/transport_benchmark.py \
+  --server http://127.0.0.1:18080 --server-pid PID --rounds 3 --seconds 8 \
+  --output artifacts/transport-comparison.json
+```
+
+측정은 같은 FPS·해상도·코덱으로 두 방식을 번갈아 실행하며 서버와 브라우저의 실제 전송 방식이 일치하는지 검사합니다. 프레임 그리기 횟수, 스트리밍 중 애플리케이션 ping 왕복 시간, 수신 후 그리기 시간, 첫 프레임 시간, CPU와 RSS를 기록합니다. 일반 HTTP의 WebSocket은 암호화되지 않고 QUIC는 TLS를 사용하므로 현재 배포 구성의 비교이며 순수한 프로토콜 비용만 분리한 실험은 아닙니다. 실제 화면에서는 `--mode desktop`을 지정할 수 있습니다. 측정 스크립트는 보기 전용이며 호스트 입력이나 화면 이미지 저장을 수행하지 않습니다. `transport_test.py`는 입력 검사를 포함하므로 반드시 `--demo` 서버에서만 실행합니다.
+
+Rust 단위 테스트 37개, 기존 WebSocket HTTP·브라우저 검사, 실제 Chrome의 HTTP/3 통합 검사 8개를 통과했습니다. HTTP/3 통합 검사는 코덱·설정·입력, 보기 전용, 동시 제어 제한, 재접속, 세션 폐기, 일회용 티켓 재사용 거부, 미지원·시간 초과 시 자동 복귀를 확인합니다. [검증 결과](docs/benchmarks/http3-verification.json)
+
+2026-11-11, Apple M5 Pro·macOS 26.6.2·Chrome 157에서 데모 12회와 실제 ScreenCaptureKit 화면 6회를 비교했습니다. 아래 값은 **H.264·화질 45·최대 너비 1280·60 FPS 목표**의 실제 화면 측정이며 각 방식 3회, 회당 3초 준비 후 8초 측정한 중앙값입니다.
+
+| 실제 화면 측정 | WebSocket | HTTP/3 |
+| --- | ---: | ---: |
+| Canvas 그리기 FPS | 54.54 | 54.78 |
+| 브라우저 CPU, 한 코어=100% | 28.85% | 26.76% |
+| 서버 CPU, 한 코어=100% | 44.45% | 45.52% |
+| 애플리케이션 왕복 지연 P95 | 0.60ms | 0.80ms |
+| 첫 프레임, JPEG로 동일하게 시작 | 60.90ms | 70.10ms |
+
+**지속적인 화면 재생에서 브라우저 CPU가 약 7.2% 낮고 FPS가 유지되어 HTTP/3를 우선하도록 선택했습니다.** 서버 CPU와 왕복·초기 연결 지연은 소폭 증가하는 절충이 있습니다. 작은 차이를 포함한 로컬 단기 측정이며 모든 네트워크에서 HTTP/3가 더 빠르다는 의미는 아닙니다. 지연 우선 비교는 `?transport=websocket`으로 할 수 있습니다. P95 열은 각 실행의 P95를 다시 중앙값으로 집계한 값입니다. [실제 화면 비교와 원시 데이터](docs/benchmarks/http3-native-comparison.md), [데모 비교](docs/benchmarks/http3-demo-comparison.md)
 
 ## 구조와 성능
 
@@ -220,9 +267,9 @@ cargo run --release -- --benchmark 60
 
 해당 호스트에서만 실행할 바이너리는 `RUSTFLAGS='-C target-cpu=native' cargo build --release`로 CPU별 최적화를 추가할 수 있습니다. 이렇게 만든 바이너리는 다른 CPU에서 실행되지 않을 수 있으므로 배포용 기본 빌드와 구분하세요.
 
-브라우저에서도 **성능 비교 → 30회 비교 실행**으로 `createImageBitmap`과 `HTMLImageElement`를 비교할 수 있습니다. 두 경로는 같은 JPEG 샘플을 사용하고 각각 3회 워밍업 후 30회 측정한 중앙값을 보여 줍니다. H.264 연결 중에는 현재 Canvas 화면을 JPEG로 변환해 공통 샘플로 사용합니다. **빠른 방식 적용**을 누르면 결과를 적용하고 이 브라우저에 설정을 저장합니다.
+브라우저에서도 **설정 → 연결 정보 → 성능 비교 → 30회 비교 실행**으로 `createImageBitmap`과 `HTMLImageElement`를 비교할 수 있습니다. 두 경로는 같은 JPEG 샘플을 사용하고 각각 3회 워밍업 후 30회 측정한 중앙값을 보여 줍니다. H.264 연결 중에는 현재 Canvas 화면을 JPEG로 변환해 공통 샘플로 사용합니다. **빠른 방식 적용**을 누르면 결과를 적용하고 이 브라우저에 설정을 저장합니다.
 
-브라우저 비교값은 디코딩과 Canvas 그리기 제출까지의 시간입니다. 네트워크, 호스트 인코딩, 실제 화면 표시 완료는 포함하지 않습니다. 하단 상태 표시의 실측 FPS·RTT·대역폭은 연결 상태를 보여 주며, H.264의 렌더 시간에는 디코더 출력 대기가 포함되므로 JPEG의 렌더 시간과 순수 디코딩 속도를 직접 비교할 수 없습니다.
+브라우저 비교값은 디코딩과 Canvas 그리기 제출까지의 시간입니다. 네트워크, 호스트 인코딩, 실제 화면 표시 완료는 포함하지 않습니다. 설정의 연결 정보에 표시되는 실측 FPS·RTT·대역폭은 연결 상태를 보여 주며, H.264의 렌더 시간에는 디코더 출력 대기가 포함되므로 JPEG의 렌더 시간과 순수 디코딩 속도를 직접 비교할 수 없습니다.
 
 2026-10-29, **Apple M5 Pro · RAM 48 GiB · macOS 26.6.2**, release 빌드에서 90프레임을 측정했습니다. 아래는 최적화 후 라이브러리 옵션 비교이며 화면 캡처를 포함하지 않습니다. [전체 결과](docs/benchmarks/encoder-resize-optimized.txt), [최적화 이전 결과](docs/benchmarks/benchmark.txt)
 
@@ -261,7 +308,7 @@ cargo run --release --example encoder_tuning -- 120 1280 830 45
 
 브라우저의 **성능 우선**(`fast`)은 60 FPS·화질 45·너비 1280이고, **고해상도**(`fast_hq`)는 이전 60 FPS 설정인 화질 65·너비 1600을 보존합니다. 같은 캡처·인코더 설정에서 두 프리셋을 비교하면 해상도·화질을 낮춘 효과를 분리할 수 있습니다.
 
-JPEG는 기본적으로 WebSocket의 Blob을 내장 디코더에 바로 전달해 매 프레임 ArrayBuffer에서 Blob을 새로 만드는 경로를 줄입니다. **성능 비교 → JPEG 수신 방식**에서 `Blob 직접 디코딩`과 `ArrayBuffer 비교 경로`를 바꿀 수 있습니다. JPEG 디코더는 같은 화면 샘플을 사용한 30회 비교 후 선택합니다. 이 짧은 디코더 비교는 WebSocket 수신 방식의 비용을 측정하지 않으므로 Blob/ArrayBuffer 비교에는 실제 스트리밍 리소스 측정을 사용합니다. H.264는 두 설정에서 모두 ArrayBuffer를 사용합니다.
+JPEG는 기본적으로 WebSocket의 Blob을 내장 디코더에 바로 전달해 매 프레임 ArrayBuffer에서 Blob을 새로 만드는 경로를 줄입니다. **설정 → 연결 정보 → 성능 비교 → JPEG 수신 방식**에서 `Blob 직접 디코딩`과 `ArrayBuffer 비교 경로`를 바꿀 수 있습니다. JPEG 디코더는 같은 화면 샘플을 사용한 30회 비교 후 선택합니다. 이 짧은 디코더 비교는 WebSocket 수신 방식의 비용을 측정하지 않으므로 Blob/ArrayBuffer 비교에는 실제 스트리밍 리소스 측정을 사용합니다. H.264는 두 설정에서 모두 ArrayBuffer를 사용합니다.
 
 Canvas는 기본적으로 `desynchronized: true`를 요청해 브라우저의 지연 감소 경로를 사용합니다. 지원하지 않는 브라우저는 힌트를 무시할 수 있으며 GPU 완료를 기다리는 옵션은 아닙니다. `http://127.0.0.1:8080/?canvas=sync`로 열면 이 힌트를 끈 비교 경로를 사용합니다. `?jpegTransport=arraybuffer&canvas=sync`로 두 이전 경로를 함께 선택할 수도 있습니다. Canvas 옵션은 페이지를 새로 열 때 적용됩니다.
 
@@ -480,7 +527,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/browser_test.py http://127.0.0.1:8080
 ```
 
-`uv`가 없는 환경에서도 위 가상환경을 준비한 뒤 `.venv/bin/python scripts/smoke_test.py`로 통합 테스트를 실행할 수 있습니다. 브라우저 테스트는 기본적으로 설치된 Google Chrome을 headless 모드로 사용합니다. Chrome이 없다면 `.venv/bin/python -m playwright install chromium` 실행 후 `PLAYWRIGHT_CHANNEL=chromium .venv/bin/python scripts/browser_test.py`로 실행합니다. Windows에서는 `.venv/bin/python` 대신 `.venv\Scripts\python.exe`를 사용합니다. 결과와 화면 이미지는 Git 추적에서 제외된 `artifacts/`에 저장됩니다. README에서 참조하는 과거 측정·검증 보고서는 `docs/benchmarks/`에 보존합니다. 테스트는 WebCodecs 지원 환경에서 H.264 디코딩, JPEG 전환, 입력 메시지, 보기 전용 모드, 디코더 비교, 작은 화면 배치, 재접속과 로그아웃을 확인합니다.
+`uv`가 없는 환경에서도 위 가상환경을 준비한 뒤 `.venv/bin/python scripts/smoke_test.py`로 통합 테스트를 실행할 수 있습니다. 브라우저 테스트는 기본적으로 설치된 Google Chrome을 headless 모드로 사용합니다. Chrome이 없다면 `.venv/bin/python -m playwright install chromium` 실행 후 `PLAYWRIGHT_CHANNEL=chromium .venv/bin/python scripts/browser_test.py`로 실행합니다. Windows에서는 `.venv/bin/python` 대신 `.venv\Scripts\python.exe`를 사용합니다. 결과와 화면 이미지는 Git 추적에서 제외된 `artifacts/`에 저장됩니다. README에서 참조하는 과거 측정·검증 보고서는 `docs/benchmarks/`에 보존합니다. 테스트는 WebCodecs 지원 환경에서 H.264 디코딩, JPEG 전환, 입력 메시지, 보기 전용 모드, 디코더 비교, 작은 화면 배치, 재접속과 API를 통한 세션 폐기를 확인합니다.
 
 ## 실제 데스크톱 검증 재현
 

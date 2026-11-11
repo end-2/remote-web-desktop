@@ -2,7 +2,7 @@
 """Measure a native server and its real headless Chromium client without host input.
 
 Keep the intended static/moving scene visible on the host. This script changes
-only the remote client's local toolbar; it does not create or animate the scene.
+only the remote client's session controls; it does not create or animate the scene.
 RWD_PASSWORD=... uv run --with playwright --with psutil python \
   scripts/resource_benchmark.py --label static
 
@@ -306,11 +306,25 @@ def run(args):
             report["conditions"]["hello"] = hello
             page.locator("#remote-canvas").wait_for(state="visible", timeout=15000)
             expect(page.locator('#codec-select option[value="h264"]')).to_be_enabled(timeout=15000)
+            # Pointer hover follows the host in control mode, so make the entire
+            # measurement session read-only before navigating local settings.
+            page.locator("#session-toggle").click()
+            page.locator("#view-only-button").click()
+            expect(page.locator("#view-only-button")).to_have_attribute("aria-pressed", "true")
+            page.locator("#session-close").click()
+            report["conditions"]["view_only"] = True
             for codec in args.codecs:
                 for preset in args.presets:
                     fps, quality, max_width = PRESETS[preset]
+                    page.locator("#session-toggle").click()
+                    expect(page.locator("#session-panel")).to_be_visible()
+                    if not page.locator("#stream-settings").evaluate("e => e.open"):
+                        page.locator("#stream-settings > summary").click()
                     page.locator("#codec-select").select_option(codec)
                     page.locator("#performance-select").select_option(preset)
+                    # Measure the default unobstructed session, with controls closed.
+                    page.locator("#session-close").click()
+                    expect(page.locator("#session-panel")).to_be_hidden()
                     expected = {"codec": codec, "fps": fps, "quality": quality, "max_width": max_width}
                     page.wait_for_function("expected => Object.entries(expected).every(([k,v]) => window.resourceBenchmark.settings?.[k] === v)", arg=expected, timeout=15000)
                     before = page.evaluate("codec => window.resourceBenchmark.totalDraws[codec]", codec)

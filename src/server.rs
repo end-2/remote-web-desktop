@@ -2,14 +2,13 @@ use axum::{
     Json, Router,
     extract::{
         ConnectInfo, DefaultBodyLimit, State, WebSocketUpgrade,
-        ws::{CloseFrame, Message, WebSocket},
+        ws::{CloseFrame, Message},
     },
     http::{HeaderMap, HeaderValue, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::{
@@ -41,6 +40,7 @@ pub struct AppState {
     pub h264_mode: crate::encoding::H264Mode,
     pub controller: Arc<Semaphore>,
     pub shutdown: watch::Receiver<bool>,
+    pub http3: Option<Arc<crate::http3::Http3>>,
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
@@ -76,13 +76,31 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/api/session", get(session))
         .route("/api/login", post(login))
         .route("/api/logout", post(logout))
+        .route("/api/transport", post(transport_config))
         .route("/ws", get(upgrade))
         .layer(DefaultBodyLimit::max(4096))
-        .layer(middleware::from_fn(security_headers))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            security_headers,
+        ))
         .with_state(state)
 }
 
-async fn security_headers(request: axum::extract::Request, next: Next) -> Response {
+async fn security_headers(
+    State(state): State<Arc<AppState>>,
+    request: axum::extract::Request,
+    next: Next,
+) -> Response {
+    let http3_origin = state.http3.as_ref().and_then(|server| {
+        crate::http3::origin(
+            request.headers(),
+            state.public_origin.as_deref(),
+            server.port(),
+        )
+    });
+    let connect = http3_origin
+        .map(|origin| format!("'self' {origin}"))
+        .unwrap_or_else(|| "'self'".into());
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
@@ -92,7 +110,7 @@ async fn security_headers(request: axum::extract::Request, next: Next) -> Respon
     );
     headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
     headers.insert("referrer-policy", HeaderValue::from_static("no-referrer"));
-    headers.insert("content-security-policy", HeaderValue::from_static("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"));
+    headers.insert("content-security-policy", HeaderValue::from_str(&format!("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src {connect}; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")).expect("validated CSP origin"));
     response
 }
 
@@ -102,7 +120,7 @@ fn error(status: StatusCode, detail: &str) -> Response {
 
 async fn session(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Json<Value> {
     Json(
-        json!({"authenticated": auth::cookie_token(&headers).is_some_and(|token| state.auth.valid(&token))}),
+        json!({"authenticated": auth::cookie_token(&headers).is_some_and(|token| state.auth.valid(&token)), "http3_available":state.http3.is_some()}),
     )
 }
 
@@ -174,6 +192,32 @@ async fn logout(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Respo
         .into_response()
 }
 
+async fn transport_config(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Response {
+    if !auth::same_origin(&headers, state.public_origin.as_deref()) {
+        return error(StatusCode::FORBIDDEN, "잘못된 요청 출처입니다.");
+    }
+    let Some(token) = auth::cookie_token(&headers).filter(|token| state.auth.valid(token)) else {
+        return error(StatusCode::UNAUTHORIZED, "로그인이 필요합니다.");
+    };
+    let Some(server) = &state.http3 else {
+        return Json(json!({"mode":"websocket"})).into_response();
+    };
+    let Some(endpoint_origin) =
+        crate::http3::origin(&headers, state.public_origin.as_deref(), server.port())
+    else {
+        return error(StatusCode::BAD_REQUEST, "잘못된 서버 주소입니다.");
+    };
+    let origin = headers
+        .get("origin")
+        .and_then(|value| value.to_str().ok())
+        .unwrap()
+        .to_owned();
+    match server.bootstrap(token, origin, endpoint_origin, &state.auth) {
+        Some(config) => Json(config).into_response(),
+        None => error(StatusCode::TOO_MANY_REQUESTS, "잠시 후 다시 연결하세요."),
+    }
+}
+
 async fn upgrade(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -187,10 +231,12 @@ async fn upgrade(
         .max_frame_size(16 * 1024)
         .write_buffer_size(0)
         .max_write_buffer_size(16 * 1024 * 1024)
-        .on_upgrade(move |socket| connection(socket, state, token))
+        .on_upgrade(move |socket| {
+            connection(crate::transport::Socket::websocket(socket), state, token)
+        })
 }
 
-async fn close(socket: &mut WebSocket, code: u16, message: &str) {
+async fn close(socket: &mut crate::transport::Socket, code: u16, message: &str) {
     let _ = tokio::time::timeout(Duration::from_secs(2), async {
         let _ = socket
             .send(Message::Text(
@@ -205,6 +251,7 @@ async fn close(socket: &mut WebSocket, code: u16, message: &str) {
                 reason: message.chars().take(30).collect::<String>().into(),
             })))
             .await;
+        socket.close().await;
     })
     .await;
 }
@@ -214,7 +261,11 @@ fn send_json(tx: &mpsc::Sender<Message>, value: Value) -> Result<(), String> {
         .map_err(|_| "클라이언트의 수신 속도가 너무 느립니다.".into())
 }
 
-async fn connection(mut socket: WebSocket, state: Arc<AppState>, token: Option<String>) {
+pub(crate) async fn connection(
+    mut socket: crate::transport::Socket,
+    state: Arc<AppState>,
+    token: Option<String>,
+) {
     let Some(token) = token else {
         close(&mut socket, 4401, "로그인이 필요합니다.").await;
         return;
@@ -250,7 +301,7 @@ async fn connection(mut socket: WebSocket, state: Arc<AppState>, token: Option<S
         codec: state.initial_codec,
         ..Default::default()
     };
-    let hello = json!({"type":"hello", "hostname":info.hostname, "platform":info.platform, "mode":info.mode, "monitors":info.monitors, "settings":settings, "max_in_flight":2});
+    let hello = json!({"type":"hello", "hostname":info.hostname, "platform":info.platform, "mode":info.mode, "monitors":info.monitors, "settings":settings, "max_in_flight":2, "transport":socket.name()});
     let (mut sink, mut source) = socket.split();
     let (tx, mut output) = mpsc::channel::<Message>(8);
     let mut writer = tokio::spawn(async move {

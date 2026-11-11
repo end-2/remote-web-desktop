@@ -1,9 +1,11 @@
 mod auth;
 mod desktop;
 mod encoding;
+mod http3;
 mod protocol;
 mod resize;
 mod server;
+mod transport;
 mod worker;
 
 use clap::Parser;
@@ -17,6 +19,12 @@ struct Args {
     host: std::net::IpAddr,
     #[arg(long, env = "RWD_PORT", default_value_t = 8080)]
     port: u16,
+    /// Enable HTTP/3 WebTransport on this UDP port (WebSocket remains available).
+    #[arg(long, env = "RWD_HTTP3_PORT")]
+    http3_port: Option<u16>,
+    /// HTTP/3 UDP bind address; defaults to --host. Useful with a local HTTPS proxy.
+    #[arg(long, env = "RWD_HTTP3_HOST", requires = "http3_port")]
+    http3_host: Option<std::net::IpAddr>,
     /// Synthetic desktop; never captures or controls the real host.
     #[arg(long)]
     demo: bool,
@@ -110,6 +118,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let addr = SocketAddr::new(args.host, args.port);
     let listener = tokio::net::TcpListener::bind(addr).await?;
+    let http3 = args
+        .http3_port
+        .map(|port| http3::Http3::bind(SocketAddr::new(args.http3_host.unwrap_or(args.host), port)))
+        .transpose()?;
     // Ask locally once, after startup validation, never in response to a client.
     // Missing grants or an unavailable GUI must not prevent serving the web UI.
     if args.should_request_permissions()
@@ -129,21 +141,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         h264_mode: args.h264_mode,
         controller: Arc::new(Semaphore::new(1)),
         shutdown: shutdown_rx,
+        http3: http3.clone(),
     });
     drop(password);
+    let http3_task = http3.map(|server| tokio::spawn(server.serve(state.clone())));
     tracing::info!(address = %addr, demo = args.demo, "Remote desktop server ready");
     eprintln!("브라우저 접속: http://{addr}  (종료: Ctrl+C)");
-    axum::serve(
+    let shutdown_signal = shutdown_tx.clone();
+    let result = axum::serve(
         listener,
         server::router(state.clone()).into_make_service_with_connect_info::<SocketAddr>(),
     )
     .with_graceful_shutdown(async move {
         termination_signal().await;
-        let _ = shutdown_tx.send(true);
+        let _ = shutdown_signal.send(true);
     })
-    .await?;
+    .await;
+    let _ = shutdown_tx.send(true);
+    if let Some(task) = http3_task {
+        let _ = task.await;
+    }
     // Keep the runtime alive until the native worker releases all held inputs.
     let _released = state.controller.acquire().await?;
+    result?;
     Ok(())
 }
 

@@ -1,0 +1,62 @@
+{
+  "passed": [
+    "Default selects available HTTP/3 and renders with hidden controls",
+    "HTTP/3 codec/settings/input and view-only restrictions",
+    "HTTP/3 enforces the single controller across sessions",
+    "HTTP/3 disconnect/reconnect and session revocation",
+    "HTTP/3 handshake rejects a replayed one-use ticket",
+    "Unsupported HTTP/3 automatically falls back to WebSocket",
+    "Forced HTTP/3 cannot silently contaminate benchmark with WebSocket",
+    "HTTP/3 timeout falls back without leaking a client connection"
+  ],
+  "page_errors": [],
+  "verified_at_utc": "2026-11-11T14:20:32.414440+00:00",
+  "rust_unit_tests_passed": 37,
+  "websocket_regression": {
+    "smoke_test": "passed",
+    "browser_test": "passed"
+  },
+  "default_selection": [
+    {
+      "http3_server": false,
+      "webtransport_supported": true,
+      "query": "none",
+      "actual_transport": "websocket",
+      "bootstrap_requests": 0,
+      "page_errors": []
+    },
+    {
+      "http3_server": true,
+      "webtransport_supported": true,
+      "query": "none",
+      "actual_transport": "http3",
+      "bootstrap_requests": 1,
+      "page_errors": []
+    },
+    {
+      "http3_server": true,
+      "webtransport_supported": false,
+      "query": "none",
+      "actual_transport": "websocket",
+      "bootstrap_requests": 0,
+      "page_errors": []
+    }
+  ],
+  "packaged_native": {
+    "mode": "desktop",
+    "transport": "http3",
+    "capture_backend": "sck",
+    "frames": 52,
+    "input_commands": [],
+    "ui_transport": "H.264 / WEBCODECS / HTTP/3",
+    "embedded_assets": "match",
+    "page_errors": [],
+    "default_without_transport_query": true
+  },
+  "performance_cases": {
+    "demo": 12,
+    "native": 6
+  },
+  "permissions": "Screen Recording and Accessibility refreshed through macOS System Settings UI for the existing app",
+  "scope": "Demo tests may inject synthetic input; native checks and performance measurements send no host input or save screen pixels."
+}

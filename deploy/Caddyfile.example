@@ -1,7 +1,15 @@
 # Replace remote.example.com with a domain pointing at this host.
 # Start the Rust server with:
 # --host 127.0.0.1 --port 8080 --public-origin https://remote.example.com --secure-cookie
-# Caddy handles HTTPS and the WebSocket upgrade automatically.
+# HTTPS pages/API can negotiate HTTP/3 over UDP 443, with HTTP/2 and HTTP/1.1 fallback.
+# WebSocket remains a separate stream transport; enabling h3 here does not convert it.
+# Optional WebTransport uses the Rust server's --http3-port directly (see README).
+{
+    servers {
+        protocols h1 h2 h3
+    }
+}
+
 remote.example.com {
     reverse_proxy 127.0.0.1:8080
 }
